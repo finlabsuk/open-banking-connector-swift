@@ -21,7 +21,7 @@ limitations under the License.
 // ********************************************************************************
 
 This product bundles a derviation of Sources/NIOHTTP1Server/main.swift from
-the Swift-NIO project
+the SwiftNIO project
 
   * LICENCE (Apache License 2.0):
     * https://www.apache.org/licenses/LICENSE-2.0
