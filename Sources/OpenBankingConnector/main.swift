@@ -523,12 +523,12 @@ default:
     bindTarget = BindTo.ip(host: defaultHost, port: defaultPort)
 }
 
-let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 let threadPool = NIOThreadPool(numberOfThreads: 6)
 threadPool.start()
 
 let fileIO = NonBlockingFileIO(threadPool: threadPool)
-let bootstrap = ServerBootstrap(group: group)
+let bootstrap = ServerBootstrap(group: eventLoopGroup)
     // Specify backlog and enable SO_REUSEADDR for the server itself
     .serverChannelOption(ChannelOptions.backlog, value: 256)
     .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
@@ -546,9 +546,12 @@ let bootstrap = ServerBootstrap(group: group)
     .childChannelOption(ChannelOptions.allowRemoteHalfClosure, value: allowHalfClosure)
 
 defer {
-    try! group.syncShutdownGracefully()
+    try! eventLoopGroup.syncShutdownGracefully()
     try! threadPool.syncShutdownGracefully()
 }
+
+let storageEventLoop = eventLoopGroup.next()
+let httpClientEventLoop = eventLoopGroup.next()
 
 print("htdocs = \(htdocs)")
 
