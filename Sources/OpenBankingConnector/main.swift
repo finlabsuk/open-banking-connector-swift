@@ -1,7 +1,7 @@
 // ********************************************************************************
 //
 // This source file is a modified version of Sources/NIOHTTP1Server/main.swift from
-// the Swift-NIO project (https://github.com/apple/swift-nio).
+// the Swift-NIO project ( https://github.com/apple/swift-nio ).
 //
 // Modifications are Copyright (C) 2019 Finnovation Labs and the
 // Open Banking Connector project authors. See below for copyright notice from

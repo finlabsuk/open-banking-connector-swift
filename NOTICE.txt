@@ -23,17 +23,17 @@ limitations under the License.
 This product bundles a derviation of Sources/NIOHTTP1Server/main.swift from
 the Swift-NIO project
 
-* LICENCE (Apache License 2.0):
-  * https://www.apache.org/licenses/LICENSE-2.0
-* HOMEPAGE:
-  * https://github.com/apple/swift-nio
-* RELEVANT ATTRIBUTION NOTICES:
-  ------
-  This product is heavily influenced by Netty.
   * LICENCE (Apache License 2.0):
-    * https://github.com/netty/netty/blob/4.1/LICENSE.txt
+    * https://www.apache.org/licenses/LICENSE-2.0
   * HOMEPAGE:
-    * https://netty.io
-  ------
+    * https://github.com/apple/swift-nio
+  * RELEVANT ATTRIBUTION NOTICES:
+    ------
+    This product is heavily influenced by Netty.
+    * LICENCE (Apache License 2.0):
+      * https://github.com/netty/netty/blob/4.1/LICENSE.txt
+    * HOMEPAGE:
+      * https://netty.io
+    ------
 
 // ********************************************************************************

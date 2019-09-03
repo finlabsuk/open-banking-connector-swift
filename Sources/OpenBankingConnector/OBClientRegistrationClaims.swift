@@ -1,6 +1,7 @@
 // ********************************************************************************
 //
-// This source file is part of the Open Banking Connector project.
+// This source file is part of the Open Banking Connector project
+// ( https://github.com/finlabsuk/open-banking-connector ).
 //
 // Copyright (C) 2019 Finnovation Labs and the Open Banking Connector project authors.
 //
