@@ -7,10 +7,7 @@
 // Open Banking Connector project authors. See below for copyright notice from
 // the original file.
 //
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-//
+// Licensed under Apache License v2.0. See LICENSE.txt for licence information.
 // SPDX-License-Identifier: Apache-2.0
 //
 // ********************************************************************************
