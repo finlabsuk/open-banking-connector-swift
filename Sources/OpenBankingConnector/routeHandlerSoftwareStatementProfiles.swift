@@ -17,25 +17,54 @@ import NIOFoundationCompat
 import AsyncHTTPClient
 import SQLKit
 
-func routeHandlerStatements(
-    _ context: ChannelHandlerContext,
-    _ request: HTTPServerRequestPart,
-    method: HTTPMethod,
+func routeHandlerSoftwareStatementProfiles(
+    context: ChannelHandlerContext,
+    request: HTTPServerRequestPart,
+    httpMethod: HTTPMethod,
     path: String,
-    softwareStatementProfiles: [SoftwareStatementProfile]
+    responseCallback: @escaping (HTTPResponseStatus, String) -> Void,
+    buffer: inout ByteBuffer
 ) {
     
-    switch (method, path) {
+    switch (httpMethod, path) {
     case (.POST, ""):
         
-        let currentFuture = context.eventLoop.makeSucceededFuture(())
-        
-        for softwareStatementProfile in softwareStatementProfiles {
-            currentFuture.flatMap({ softwareStatementProfile.insert() })
+        switch request {
+        case .head: break;
+        case .body(buffer: var buf):
+            buffer.writeBuffer(&buf)
+        case .end:
+            
+            // Validate body data
+            let softwareStatementProfiles: [SoftwareStatementProfile]
+            do {
+                let data = buffer.readData(length: buffer.readableBytes)!
+                softwareStatementProfiles = try JSONDecoder().decode([SoftwareStatementProfile].self, from: data)
+                print(softwareStatementProfiles)
+            } catch {
+                print(error)
+                responseCallback(.badRequest, "Bad input...")
+                return
+            }
+            
+            // Save software statement profiles
+            let currentFuture = context.eventLoop.makeSucceededFuture(())
+            for softwareStatementProfile in softwareStatementProfiles {
+                currentFuture.flatMap({ softwareStatementProfile.insert() })
+            }
+            
+            currentFuture
+                
+                // Send success response
+                .flatMapThrowing { responseCallback(.created, "Success text") }
+                
+                // Send failure response
+                .whenFailure { error in responseCallback(.internalServerError, "\(error)") }
+
+            
         }
         
     default: break;
     }
-    
     
 }

@@ -414,44 +414,70 @@ private final class HTTPHandler: ChannelInboundHandler {
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        
         let reqPart = self.unwrapInboundIn(data)
-        if let handler = self.handler {
-            handler(context, reqPart)
-            return
-        }
-
+        
         switch reqPart {
         case .head(let request):
-            if request.uri.unicodeScalars.starts(with: "/dynamic".unicodeScalars) {
-                self.handler = self.dynamicHandler(request: request)
-                self.handler!(context, reqPart)
-                return
-            } else if let path = request.uri.chopPrefix("/sendfile/") {
-                self.handler = { self.handleFile(context: $0, request: $1, ioMethod: .sendfile, path: path) }
-                self.handler!(context, reqPart)
-                return
-            } else if let path = request.uri.chopPrefix("/fileio/") {
-                self.handler = { self.handleFile(context: $0, request: $1, ioMethod: .nonblockingFileIO, path: path) }
-                self.handler!(context, reqPart)
-                return
+            
+            // Set up response callback
+            func responseCallback(status: HTTPResponseStatus = .ok, string: String) {
+                self.state.requestComplete()
+                
+                let responseHead = httpResponseHead(request: request, status: status)
+                // TODO: add any headers
+                context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil) // writeAndFlush?
+                
+                var responseBuffer = context.channel.allocator.buffer(capacity: string.utf8.count)
+                responseBuffer.writeString(string)
+                context.write(self.wrapOutboundOut(.body(.byteBuffer(responseBuffer))), promise: nil)
+                
+                self.completeResponse(context, trailers: nil, promise: nil)
             }
-
-            self.keepAlive = request.isKeepAlive
-            self.state.requestReceived()
-
-            var responseHead = httpResponseHead(request: request, status: HTTPResponseStatus.ok)
-            self.buffer.clear()
-            self.buffer.writeString(self.defaultResponse)
-            responseHead.headers.add(name: "content-length", value: "\(self.buffer!.readableBytes)")
-            let response = HTTPServerResponsePart.head(responseHead)
-            context.write(self.wrapOutboundOut(response), promise: nil)
+            
+            // Validate request and assign handler
+            let httpMethod = request.method
+            if let path = request.uri.chopPrefix("/software-statement-profiles") {
+                self.buffer.clear()
+                self.handler = {
+                    routeHandlerSoftwareStatementProfiles(
+                        context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
+                        buffer: &self.buffer
+                    )
+                }
+            } else if let path = request.uri.chopPrefix("/register") {
+                let issuerURLArray = request.headers[canonicalForm: "x-obc-issuer-url"]
+                let softwareStatementProfileIdArray = request.headers[canonicalForm: "x-obc-software-statement-profile-id"]
+                if issuerURLArray.count == 1,
+                    softwareStatementProfileIdArray.count == 1 {
+                    let issuerURL = String(issuerURLArray[0])
+                    let softwareStatementProfileId = String(softwareStatementProfileIdArray[0])
+                    self.handler = {
+                        routeHandlerRegister(
+                            context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
+                            issuerURL: issuerURL, softwareStatementProfileId: softwareStatementProfileId
+                        )
+                    }
+                }
+            }
+            
+            if let handler = self.handler {
+                self.keepAlive = request.isKeepAlive
+                self.state.requestReceived()
+                handler(context, reqPart)
+            }
+            
         case .body:
-            break
+            
+            if let handler = self.handler {
+                handler(context, reqPart)
+            }
+            
         case .end:
-            self.state.requestComplete()
-            let content = HTTPServerResponsePart.body(.byteBuffer(buffer!.slice()))
-            context.write(self.wrapOutboundOut(content), promise: nil)
-            self.completeResponse(context, trailers: nil, promise: nil)
+            
+            if let handler = self.handler {
+                handler(context, reqPart)
+            }
         }
     }
 

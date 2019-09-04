@@ -19,60 +19,74 @@ import SQLKit
 
 let decoder = JSONDecoder()
 
-
 func routeHandlerRegister(
-    _ context: ChannelHandlerContext,
-    _ request: HTTPServerRequestPart,
+    context: ChannelHandlerContext,
+    request: HTTPServerRequestPart,
+    httpMethod: HTTPMethod,
+    path: String,
+    responseCallback: @escaping (HTTPResponseStatus, String) -> Void,
     issuerURL: String,
-    softwareStatementId: String,
-    method: HTTPMethod,
-    path: String
-) {
+    softwareStatementProfileId: String
+    ) {
     
-    let aspspOverrides = getASPSPOverrides(issuerURL: issuerURL)
-    
-    switch (method, path) {
-    case (.POST, ""):
+    // Wait until request fully received
+    if case .end = request {
         
-        var issuerRegistrationEndpoint: String!
-        
-        context.eventLoop.makeSucceededFuture(())
+        switch (httpMethod, path) {
+        case (.POST, ""):
             
-            // Get OpenID configuration from well-known endpoint for issuer URL
-            .flatMap({ OpenIDConfiguration.httpGet(
-                issuerURL: issuerURL,
-                overrides: aspspOverrides?.openIDConfigurationOverrides
-                )
-            })
+            let aspspOverrides = getASPSPOverrides(issuerURL: issuerURL)
+            var issuerRegistrationEndpoint: String!
             
-            // Create OB client registration claims
-            .flatMap({ openIDConfiguration -> EventLoopFuture<OBClientRegistrationClaims> in
-                issuerRegistrationEndpoint = openIDConfiguration.registration_endpoint
-                return OBClientRegistrationClaims.initAsync(
+            context.eventLoop.makeSucceededFuture(())
+                
+                // Get OpenID configuration from well-known endpoint for issuer URL
+                .flatMap({ OpenIDConfiguration.httpGet(
                     issuerURL: issuerURL,
-                    softwareStatementId: softwareStatementId,
-                    overrides: aspspOverrides?.obClientRegistrationClaimsOverrides
-                )
-            })
+                    overrides: aspspOverrides?.openIDConfigurationOverrides
+                    )
+                })
+                
+                // Create OB client registration claims
+                .flatMap({ openIDConfiguration -> EventLoopFuture<OBClientRegistrationClaims> in
+                    issuerRegistrationEndpoint = openIDConfiguration.registration_endpoint
+                    return OBClientRegistrationClaims.initAsync(
+                        issuerURL: issuerURL,
+                        softwareStatementId: softwareStatementProfileId,
+                        overrides: aspspOverrides?.obClientRegistrationClaimsOverrides
+                    )
+                })
+                
+                // TODO: Check if client with same claims already exists
+                
+                // Post OB client registration claims
+                .flatMap({ obClientRegistrationClaims -> EventLoopFuture<OBClient> in
+                    return obClientRegistrationClaims.httpPost(
+                        issuerRegistrationURL: issuerRegistrationEndpoint,
+                        softwareStatementId: softwareStatementProfileId,
+                        httpClientMTLSConfigurationOverrides: aspspOverrides?.httpClientMTLSConfigurationOverrides,
+                        obClientRegistrationResponseOverrides: aspspOverrides?.obClientRegistrationResponseOverrides
+                    )
+                })
+                
+                // Save OB client
+                .flatMap({
+                    obClient in obClient.insert()
+                })
+                
+                // Send success response
+                .flatMapThrowing({
+                    responseCallback(.created, "Success text")
+                })
+                
+                // Send failure response
+                .whenFailure({
+                    error in responseCallback(.internalServerError, "\(error)")
+                })
             
-            // TODO: Check if client with same claims already exists
-            
-            // Post OB client registration claims
-            .flatMap({ obClientRegistrationClaims -> EventLoopFuture<OBClient> in
-                return obClientRegistrationClaims.httpPost(
-                    issuerRegistrationURL: issuerRegistrationEndpoint,
-                    softwareStatementId: softwareStatementId,
-                    httpClientMTLSConfigurationOverrides: aspspOverrides?.httpClientMTLSConfigurationOverrides,
-                    obClientRegistrationResponseOverrides: aspspOverrides?.obClientRegistrationResponseOverrides
-                )
-            })
-            
-            // Save OB client
-            .flatMap({ obClient in obClient.insert() })
-        
-    default: break;
+        default: break;
+        }
     }
-    
 }
 
 
