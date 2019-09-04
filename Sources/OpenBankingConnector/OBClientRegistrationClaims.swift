@@ -21,7 +21,7 @@ struct OBClientRegistrationClaims: Claims {
     let iss: String
     let iat: Date
     let exp: Date
-    let aud: String
+    var aud: String
     let jti: String
     let client_id: String?
     let redirect_uris: [String]
@@ -40,11 +40,14 @@ struct OBClientRegistrationClaims: Claims {
     
     mutating func applyOverrides(overrides: OBClientRegistrationClaimsOverrides?) {
         if let overrides = overrides {
-            if let newValue = overrides.grant_types {
-                grant_types = newValue
+            if let newValue = overrides.aud {
+                aud = newValue
             }
             if let newValue = overrides.token_endpoint_auth_method {
                 token_endpoint_auth_method = newValue
+            }
+            if let newValue = overrides.grant_types {
+                grant_types = newValue
             }
             if let newValue = overrides.token_endpoint_auth_signing_alg {
                 token_endpoint_auth_signing_alg = newValue

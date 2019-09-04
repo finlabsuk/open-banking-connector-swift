@@ -23,15 +23,19 @@ struct OpenIDConfigurationOverrides {
 }
 
 struct OBClientRegistrationClaimsOverrides {
-    var grant_types: [String]?
+    var aud: String?
     var token_endpoint_auth_method: String?
+    var grant_types: [String]?
     var token_endpoint_auth_signing_alg: Optional<String?>
     mutating func update(with newOverrides: OBClientRegistrationClaimsOverrides) {
-        if let newValue = newOverrides.grant_types {
-            grant_types = newValue
+        if let newValue = newOverrides.aud {
+            aud = newValue
         }
         if let newValue = newOverrides.token_endpoint_auth_method {
             token_endpoint_auth_method = newValue
+        }
+        if let newValue = newOverrides.grant_types {
+            grant_types = newValue
         }
         if let newValue = newOverrides.token_endpoint_auth_signing_alg {
             token_endpoint_auth_signing_alg = newValue
@@ -123,8 +127,9 @@ let aspspOverrides: [String: ASPSPOverrides] = [
 //        ),
         httpClientMTLSConfigurationOverrides: nil,
         obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
-            grant_types: ["client_credentials", "authorization_code"],
+            aud: nil,
             token_endpoint_auth_method: nil,
+            grant_types: ["client_credentials", "authorization_code"],
             token_endpoint_auth_signing_alg: "PS256"
         ),
         obClientRegistrationResponseOverrides: nil,
@@ -137,8 +142,9 @@ let aspspOverrides: [String: ASPSPOverrides] = [
             tlsRenegotiationSupport: .once
         ),
         obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
-            grant_types: nil,
+            aud: nil,
             token_endpoint_auth_method: "client_secret_basic",
+            grant_types: nil,
             token_endpoint_auth_signing_alg: "PS256"
         ),
         obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides(
@@ -146,13 +152,18 @@ let aspspOverrides: [String: ASPSPOverrides] = [
         ),
        children: nil
     ),
-    "https://ob.natwest.useinfinite.io": ASPSPOverrides(
+    "https://api.natwest.useinfinite.io": ASPSPOverrides(
         openIDConfigurationOverrides: nil,
         httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides(
             tlsCertificateVerification: CertificateVerification.none,
             tlsRenegotiationSupport: nil
         ),
-        obClientRegistrationClaimsOverrides: nil,
+        obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
+            aud: "https://ob.natwest.useinfinite.io",
+            token_endpoint_auth_method: nil,
+            grant_types: nil,
+            token_endpoint_auth_signing_alg: nil
+        ),
         obClientRegistrationResponseOverrides: nil,
        children: nil
     )
