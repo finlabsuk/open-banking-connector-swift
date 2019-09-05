@@ -28,8 +28,20 @@ struct SoftwareStatementProfile: StoredItem {
         }
     }
     
-    let obClientOwnerId: String? = nil
-    let userOwnerId: String? = nil
+    // Association of data object with other data objects ("ownership")
+    // Empty strings used for types where association doesn't make sense
+    /// "FinTech identity"
+    var softwareStatementProfileId: String {
+        get {
+            return self.id
+        }
+    }
+    /// "Bank (ASPSP) identity"
+    let issuerURL: String = ""
+    /// "Open Banking client identity"
+    let obClientId: String = ""
+    /// "User identity"
+    let userId: String = ""
     
     // Timestamp for object creation as best we can determine
     let created: Date = Date()

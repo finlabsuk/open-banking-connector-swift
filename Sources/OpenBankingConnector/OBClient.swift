@@ -29,16 +29,24 @@ struct OBClient: StoredItem {
     /// - returns: A String object.
     var id: String {
         get {
-            return self.aspspData.client_id
+            return self.issuerURL + "_" + self.aspspData.client_id
         }
     }
     
-    var obClientOwnerId: String? {
+    // Association of data object with other data objects ("ownership")
+    // Empty strings used for types where association doesn't make sense
+    /// "FinTech identity"
+    let softwareStatementProfileId: String
+    /// "Bank (ASPSP) identity"
+    let issuerURL: String
+    /// "Open Banking client identity"
+    var obClientId: String {
         get {
-            return self.aspspData.client_id
+            return self.id
         }
     }
-    let userOwnerId: String? = nil
+    /// "User identity"
+    var userId: String = ""
     
     // Timestamp for object creation as best we can determine
     let created: Date = Date()
@@ -50,9 +58,13 @@ struct OBClient: StoredItem {
     // ********************************************************************************
     
     init( // TODO: Remove after Swift 5.1
+        softwareStatementProfileId: String,
+        issuerURL: String,
         requestClaims: OBClientRegistrationClaims,
         aspspData: OBClientASPSPData
     ) {
+        self.softwareStatementProfileId = softwareStatementProfileId
+        self.issuerURL = issuerURL
         self.requestClaims = requestClaims
         self.aspspData = aspspData
     }

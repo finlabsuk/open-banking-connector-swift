@@ -48,11 +48,26 @@ protocol StoredItem: Codable {
     // MARK: Stored properties (persist to storage)
     // ********************************************************************************
 
+    /// Unique identity of data object
     var id: String {get}
-    var obClientOwnerId: String? {get}
-    var userOwnerId: String? {get}
+    
+    // Association of data object with other data objects ("ownership")
+    // Empty strings used for types where association doesn't make sense
+    /// "FinTech identity"
+    var softwareStatementProfileId: String {get}
+    /// "Bank (ASPSP) identity"
+    var issuerURL: String {get}
+    /// "Open Banking client identity"
+    var obClientId: String {get}
+    /// "User identity"
+    var userId: String {get}
+
+    /// Data object creation date
     var created: Date {get}
     
+    // Has data object been deleted?
+    // (Done this way to support "undo" and merging of data objects from different DB - latest
+    // value wins.)
     var isDeleted: Mutable<Bool> {get set}
 
     // ********************************************************************************
@@ -111,8 +126,10 @@ extension StoredItem {
         return sm.db.create(table: tableName)
             .ifNotExists()
             .column("id", type: .text, .primaryKey(autoIncrement: false)) // need to add .notNull
-            .column("obClientOwnerId", type: .text)
-            .column("userOwnerId", type: .text)
+            .column("softwareStatementProfileId", type: .text, .notNull)
+            .column("issuerURL", type: .text)
+            .column("obClientId", type: .text)
+            .column("userId", type: .text)
             .column("json", type: .text, .notNull)
             .run()
             .flatMapError({error in
@@ -124,8 +141,8 @@ extension StoredItem {
     func insert() -> EventLoopFuture<Void> {
         print(tableNameTmp)
         return sm.db.insert(into: tableNameTmp)
-            .columns("id", "obClientOwnerId", "userOwnerId", "json")
-            .values(SQLBind(id), SQLBind(obClientOwnerId), SQLBind(userOwnerId),
+            .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "json")
+            .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId),
                     SQLBind(self.encodeString()))
             .run()
             .flatMapError({error in

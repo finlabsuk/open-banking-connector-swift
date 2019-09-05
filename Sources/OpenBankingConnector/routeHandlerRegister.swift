@@ -62,8 +62,10 @@ func routeHandlerRegister(
                 // Post OB client registration claims
                 .flatMap({ obClientRegistrationClaims -> EventLoopFuture<OBClient> in
                     return obClientRegistrationClaims.httpPost(
-                        issuerRegistrationURL: issuerRegistrationEndpoint,
+                        softwareStatementProfileId: softwareStatementProfileId,
                         softwareStatementId: softwareStatementProfileId,
+                        issuerURL: issuerURL,
+                        issuerRegistrationURL: issuerRegistrationEndpoint,
                         httpClientMTLSConfigurationOverrides: aspspOverrides?.httpClientMTLSConfigurationOverrides,
                         obClientRegistrationResponseOverrides: aspspOverrides?.obClientRegistrationResponseOverrides
                     )

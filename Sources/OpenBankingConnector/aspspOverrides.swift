@@ -26,6 +26,7 @@ struct OBClientRegistrationClaimsOverrides {
     var aud: String?
     var token_endpoint_auth_method: String?
     var grant_types: [String]?
+    var scope__useStringArray: Bool?
     var token_endpoint_auth_signing_alg: Optional<String?>
     mutating func update(with newOverrides: OBClientRegistrationClaimsOverrides) {
         if let newValue = newOverrides.aud {
@@ -36,6 +37,9 @@ struct OBClientRegistrationClaimsOverrides {
         }
         if let newValue = newOverrides.grant_types {
             grant_types = newValue
+        }
+        if let newValue = newOverrides.scope__useStringArray {
+            scope__useStringArray = newValue
         }
         if let newValue = newOverrides.token_endpoint_auth_signing_alg {
             token_endpoint_auth_signing_alg = newValue
@@ -130,6 +134,7 @@ let aspspOverrides: [String: ASPSPOverrides] = [
             aud: nil,
             token_endpoint_auth_method: nil,
             grant_types: ["client_credentials", "authorization_code"],
+            scope__useStringArray: nil,
             token_endpoint_auth_signing_alg: "PS256"
         ),
         obClientRegistrationResponseOverrides: nil,
@@ -145,6 +150,7 @@ let aspspOverrides: [String: ASPSPOverrides] = [
             aud: nil,
             token_endpoint_auth_method: "client_secret_basic",
             grant_types: nil,
+            scope__useStringArray: nil,
             token_endpoint_auth_signing_alg: "PS256"
         ),
         obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides(
@@ -162,6 +168,7 @@ let aspspOverrides: [String: ASPSPOverrides] = [
             aud: "https://ob.natwest.useinfinite.io",
             token_endpoint_auth_method: nil,
             grant_types: nil,
+            scope__useStringArray: true,
             token_endpoint_auth_signing_alg: nil
         ),
         obClientRegistrationResponseOverrides: nil,

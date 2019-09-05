@@ -29,7 +29,7 @@ struct OBClientRegistrationClaims: Claims {
     var grant_types: [String]
     let response_types: [String]?
     let software_id: String?
-    let scope: String
+    var scope: StringWithSpacesOrStringArray // NB: strictly should be string with spaces according to spec; we allow string array also
     let software_statement: String
     let application_type: String
     let id_token_signed_response_alg: String
@@ -48,6 +48,11 @@ struct OBClientRegistrationClaims: Claims {
             }
             if let newValue = overrides.grant_types {
                 grant_types = newValue
+            }
+            if let newValue = overrides.scope__useStringArray {
+                scope = newValue ?
+                    .stringArray(scope.asStringArray()) :
+                    .stringWithSpaces(scope.asString())
             }
             if let newValue = overrides.token_endpoint_auth_signing_alg {
                 token_endpoint_auth_signing_alg = newValue
@@ -72,8 +77,10 @@ struct OBClientRegistrationClaims: Claims {
     }
     
     func httpPost(
-        issuerRegistrationURL: String,
+        softwareStatementProfileId: String,
         softwareStatementId: String,
+        issuerURL: String,
+        issuerRegistrationURL: String,
         httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?,
         obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides?,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
@@ -125,7 +132,7 @@ struct OBClientRegistrationClaims: Claims {
                 // let client_secret_expires_at: Date?
                 // let redirect_uris: [String]
                 precondition(
-                    response.token_endpoint_auth_method == StringOrSingleElementStringArray.string(self.token_endpoint_auth_method)
+                    response.token_endpoint_auth_method.asString() == self.token_endpoint_auth_method
                 )
                 precondition(response.grant_types == self.grant_types)
                 precondition(response.response_types == self.response_types)
@@ -133,19 +140,17 @@ struct OBClientRegistrationClaims: Claims {
                 // let software_id: String?
                 // precondition(response.software_id == self.software_id)
                 if let responseScope = response.scope {
-                    precondition(responseScope.isSuperset(of: Set(self.scope.components(separatedBy: " "))))
+                    precondition(Set(responseScope.asStringArray()).isSuperset(of: Set(self.scope.asStringArray())))
                 }
                 if let response_application_type = response.application_type {
                     precondition(response_application_type == self.application_type)
                 }
                 precondition(response.id_token_signed_response_alg == self.id_token_signed_response_alg)
                 precondition(
-                    response.request_object_signing_alg == StringOrSingleElementStringArray.string(self.request_object_signing_alg)
+                    response.request_object_signing_alg.asString() == self.request_object_signing_alg
                 )
-                let self_token_endpoint_auth_signing_alg: StringOrSingleElementStringArray? = (self.token_endpoint_auth_signing_alg != nil) ?
-                    StringOrSingleElementStringArray.string(self.token_endpoint_auth_signing_alg!) : nil
-                precondition(response.token_endpoint_auth_signing_alg ==
-                    self_token_endpoint_auth_signing_alg
+               precondition(response.token_endpoint_auth_signing_alg?.asString() ==
+                    self.token_endpoint_auth_signing_alg
                 )
                 // Currently not checking these:
                 // let tls_client_auth_subject_dn: String?
@@ -159,6 +164,8 @@ struct OBClientRegistrationClaims: Claims {
                     client_secret_expires_at: response.client_secret_expires_at
                 )
                 return OBClient(
+                    softwareStatementProfileId: softwareStatementProfileId,
+                    issuerURL: issuerURL,
                     requestClaims: self,
                     aspspData: obClientASPSPData
                 )
@@ -192,7 +199,7 @@ extension OBClientRegistrationClaims {
             grant_types: ["client_credentials", "authorization_code", "refresh_token"],
             response_types: ["code id_token"],
             software_id: softwareStatementProfile.softwareStatementId,
-            scope: softwareStatementProfile.scope,
+            scope: .stringWithSpaces(softwareStatementProfile.scope),
             software_statement: softwareStatementProfile.softwareStatement,
             application_type: "web",
             id_token_signed_response_alg: "PS256",

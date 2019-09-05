@@ -12,29 +12,55 @@
 
 import Foundation
 
-enum StringWithSpacesOrStringArray: Decodable, Equatable {
+enum StringWithSpacesOrStringArray: Codable {
+      
+    case stringWithSpaces(String)
     case stringArray([String])
-     
+    
     init(from decoder: Decoder) throws {
         
         let value = try decoder.singleValueContainer()
-        
-        if let stringValue = try? value.decode(String.self) {
-            self = .stringArray(stringValue.components(separatedBy: " "))
-        } else {
-            let stringArrayValue = try value.decode([String].self)
+        if
+            let stringValue = try? value.decode(String.self)
+        {
+            self = .stringWithSpaces(stringValue)
+        } else if
+            let stringArrayValue = try? value.decode([String].self)
+        {
             self = .stringArray(stringArrayValue)
+            } else
+        {
+            throw "Cannot decode into either case."
         }
-
     }
     
-    func isSuperset(of subset: Set<String>) -> Bool {
-        if case .stringArray(let array) = self {
-            return Set(array).isSuperset(of: subset)
-        } else {
-            fatalError()
-        }
+    func encode(to encoder: Encoder) throws {
         
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .stringWithSpaces(let aValue):
+            try container.encode(aValue)
+        case .stringArray(let aValue):
+            try container.encode(aValue)
+        }
     }
     
+    func asString() -> String {
+        switch self {
+        case .stringWithSpaces(let value):
+            return value
+        case .stringArray(let value):
+            return value.joined(separator: " ")
+        }
+    }
+
+    func asStringArray() -> [String] {
+        switch self {
+        case .stringWithSpaces(let value):
+            return value.components(separatedBy: " ")
+        case .stringArray(let value):
+            return value
+        }
+    }
+
 }
