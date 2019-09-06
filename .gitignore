@@ -10,4 +10,8 @@ xcuserdata/
 *.key
 *.sqlite3
 
-Package.resolved # to avoid sync of user package versions
+# Avoids sync of user package versions
+Package.resolved
+
+# Avoids debris from Xcode
+/.swiftpm
