@@ -16,55 +16,6 @@ import SwiftJWT
 import AsyncHTTPClient
 import NIOFoundationCompat
 
-struct DateExcludedFromEquatable: Codable, Equatable {
-    let date: Date
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        date = try container.decode(Date.self)
-    }
-    init(date: Date) {
-        self.date = date
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(date)
-    }
-    
-    static func == (lhs: DateExcludedFromEquatable, rhs: DateExcludedFromEquatable) -> Bool {
-        return true
-    }
-    
-}
-
-struct StringExcludedFromEquatable: Codable, Equatable {
-    let string: String
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        string = try container.decode(String.self)
-    }
-    init(string: String) {
-        self.string = string
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(string)
-    }
-    
-    static func == (lhs: StringExcludedFromEquatable, rhs: StringExcludedFromEquatable) -> Bool {
-        return true
-    }
-    
-}
-
-
-
-
-
-
 // See: https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1078034771/Dynamic+Client+Registration+-+v3.2
 struct OBClientRegistrationClaims: Claims, Equatable {
 
