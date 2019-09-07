@@ -37,6 +37,7 @@ func routeHandlerRegister(
             
             let aspspOverrides = getASPSPOverrides(issuerURL: issuerURL)
             var issuerRegistrationEndpoint: String!
+            var obClientRegistrationClaims: OBClientRegistrationClaims!
             
             context.eventLoop.makeSucceededFuture(())
                 
@@ -57,23 +58,44 @@ func routeHandlerRegister(
                     )
                 })
                 
-                // TODO: Check if client with same claims already exists
-                
-                // Post OB client registration claims
-                .flatMap({ obClientRegistrationClaims -> EventLoopFuture<OBClient> in
-                    return obClientRegistrationClaims.httpPost(
+                // Load relevant OB clients that already exist
+                .flatMap({ obClientRegistrationClaimsTmp -> EventLoopFuture<[OBClient]> in
+                    obClientRegistrationClaims = obClientRegistrationClaimsTmp
+                    return OBClient.load(
+                        id: nil,
                         softwareStatementProfileId: softwareStatementProfileId,
-                        softwareStatementId: softwareStatementProfileId,
-                        issuerURL: issuerURL,
-                        issuerRegistrationURL: issuerRegistrationEndpoint,
-                        httpClientMTLSConfigurationOverrides: aspspOverrides?.httpClientMTLSConfigurationOverrides,
-                        obClientRegistrationResponseOverrides: aspspOverrides?.obClientRegistrationResponseOverrides
+                        issuerURL: issuerURL
                     )
                 })
                 
-                // Save OB client
-                .flatMap({
-                    obClient in obClient.insert()
+                // If any has same registration claims, use that else create and save new OB client
+                .flatMap({obClientArray -> EventLoopFuture<Void> in
+                    //print(obClientRegistrationClaims)
+                    var haveMatch = false
+                    for obClient in obClientArray {
+                        if obClient.registrationClaims == obClientRegistrationClaims {
+                            haveMatch = true
+                        }
+                    }
+                    //print("HaveMatch: \(haveMatch)")
+                    if haveMatch {
+                        return context.eventLoop.makeSucceededFuture(())
+                    } else {
+                        
+                        // Post OB client registration claims
+                        return obClientRegistrationClaims.httpPost(
+                            softwareStatementProfileId: softwareStatementProfileId,
+                            softwareStatementId: softwareStatementProfileId,
+                            issuerURL: issuerURL,
+                            issuerRegistrationURL: issuerRegistrationEndpoint,
+                            httpClientMTLSConfigurationOverrides: aspspOverrides?.httpClientMTLSConfigurationOverrides,
+                            obClientRegistrationResponseOverrides: aspspOverrides?.obClientRegistrationResponseOverrides
+                        )
+                            // Save OB client
+                            .flatMap({
+                                obClient in obClient.insert()
+                            })
+                    }
                 })
                 
                 // Send success response

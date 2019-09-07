@@ -12,7 +12,7 @@
 
 import Foundation
 
-enum StringWithSpacesOrStringArray: Codable {
+enum StringWithSpacesOrStringArray: Codable, Equatable {
       
     case stringWithSpaces(String)
     case stringArray([String])

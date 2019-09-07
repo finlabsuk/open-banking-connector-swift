@@ -16,13 +16,63 @@ import SwiftJWT
 import AsyncHTTPClient
 import NIOFoundationCompat
 
+struct DateExcludedFromEquatable: Codable, Equatable {
+    let date: Date
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        date = try container.decode(Date.self)
+    }
+    init(date: Date) {
+        self.date = date
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(date)
+    }
+    
+    static func == (lhs: DateExcludedFromEquatable, rhs: DateExcludedFromEquatable) -> Bool {
+        return true
+    }
+    
+}
+
+struct StringExcludedFromEquatable: Codable, Equatable {
+    let string: String
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        string = try container.decode(String.self)
+    }
+    init(string: String) {
+        self.string = string
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(string)
+    }
+    
+    static func == (lhs: StringExcludedFromEquatable, rhs: StringExcludedFromEquatable) -> Bool {
+        return true
+    }
+    
+}
+
+
+
+
+
+
 // See: https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1078034771/Dynamic+Client+Registration+-+v3.2
-struct OBClientRegistrationClaims: Claims {
+struct OBClientRegistrationClaims: Claims, Equatable {
+
     let iss: String
-    let iat: Date
-    let exp: Date
+    let iat: DateExcludedFromEquatable
+    let exp: DateExcludedFromEquatable
     var aud: String
-    let jti: String
+    let jti: StringExcludedFromEquatable
     let client_id: String?
     let redirect_uris: [String]
     var token_endpoint_auth_method: String
@@ -166,7 +216,7 @@ struct OBClientRegistrationClaims: Claims {
                 return OBClient(
                     softwareStatementProfileId: softwareStatementProfileId,
                     issuerURL: issuerURL,
-                    requestClaims: self,
+                    registrationClaims: self,
                     aspspData: obClientASPSPData
                 )
             })
@@ -189,10 +239,16 @@ extension OBClientRegistrationClaims {
     ) {
         self.init(
             iss: softwareStatementProfile.softwareStatementId,
-            iat: Date(),
-            exp: Date(timeIntervalSinceNow: 3600),
+            iat: DateExcludedFromEquatable(
+                date: Date() // TODO: change format to avoid fractional value?
+            ),
+            exp: DateExcludedFromEquatable(
+                date: Date(timeIntervalSinceNow: 3600) // TODO: change format to avoid fractional value?
+            ),
             aud: issuerURL,
-            jti: UUID().uuidString,
+            jti: StringExcludedFromEquatable(
+                string: UUID().uuidString
+            ),
             client_id: nil,
             redirect_uris: softwareStatementProfile.redirectURLs,
             token_endpoint_auth_method: "tls_client_auth",

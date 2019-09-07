@@ -160,10 +160,7 @@ let aspspOverrides: [String: ASPSPOverrides] = [
     ),
     "https://api.natwest.useinfinite.io": ASPSPOverrides(
         openIDConfigurationOverrides: nil,
-        httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides(
-            tlsCertificateVerification: CertificateVerification.none,
-            tlsRenegotiationSupport: nil
-        ),
+        httpClientMTLSConfigurationOverrides: nil,
         obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
             aud: "https://ob.natwest.useinfinite.io",
             token_endpoint_auth_method: nil,

@@ -11,6 +11,8 @@
 // ********************************************************************************
 
 import Foundation
+import NIO
+import SQLKit
 
 struct OBClientASPSPData: Codable {
     let client_id: String
@@ -27,11 +29,7 @@ struct OBClient: StoredItem {
     
     /// ID used to uniquely identify object (cannot be changed, create new object to change)
     /// - returns: A String object.
-    var id: String {
-        get {
-            return self.issuerURL + "_" + self.aspspData.client_id
-        }
-    }
+    var id: String = UUID().uuidString
     
     // Association of data object with other data objects ("ownership")
     // Empty strings used for types where association doesn't make sense
@@ -60,17 +58,58 @@ struct OBClient: StoredItem {
     init( // TODO: Remove after Swift 5.1
         softwareStatementProfileId: String,
         issuerURL: String,
-        requestClaims: OBClientRegistrationClaims,
+        registrationClaims: OBClientRegistrationClaims,
         aspspData: OBClientASPSPData
     ) {
         self.softwareStatementProfileId = softwareStatementProfileId
         self.issuerURL = issuerURL
-        self.requestClaims = requestClaims
+        self.registrationClaims = registrationClaims
         self.aspspData = aspspData
     }
     
-    let requestClaims: OBClientRegistrationClaims
+    let registrationClaims: OBClientRegistrationClaims
     
     let aspspData: OBClientASPSPData
+    
+    static func load(
+        id: String?,
+        softwareStatementProfileId: String?,
+        issuerURL: String?,
+        on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
+    ) -> EventLoopFuture<[OBClient]> {
+        
+        var builder = sm.db.select()
+            .column(SQLRaw("json"))
+            .from(self.tableName)
+        if let id = id {
+            builder = builder.where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+        }
+        if let softwareStatementProfileId = softwareStatementProfileId {
+            builder = builder.where(SQLColumn(SQLRaw("softwareStatementProfileId")), .equal, SQLBind(softwareStatementProfileId))
+        }
+        if let issuerURL = issuerURL {
+            builder = builder.where(SQLColumn(SQLRaw("issuerURL")), .equal, SQLBind(issuerURL))
+        }
+        let futureOnDBEventLoop = builder.all()
+        return futureOnDBEventLoop
+            .hop(to: eventLoop)
+            .flatMapThrowing({ rowArray -> [OBClient] in
+                var resultArray = [OBClient]()
+                for row in rowArray {
+                    let dataString: String = try row.decode(column: "json", as: String.self)
+                    let obClient: OBClient = try sm.jsonDecoder.decode(
+                        OBClient.self,
+                        from: Data(dataString.utf8)
+                    )
+                    resultArray.append(obClient)
+                }
+                return resultArray
+            })
+            .flatMapError({error in
+                print(error)
+                fatalError()
+            })
+        
+    }
     
 }
