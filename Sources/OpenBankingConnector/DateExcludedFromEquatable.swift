@@ -10,6 +10,8 @@
 //
 // ********************************************************************************
 
+import Foundation
+
 struct DateExcludedFromEquatable: Codable, Equatable {
     let date: Date
     
