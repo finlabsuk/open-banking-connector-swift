@@ -13,22 +13,17 @@
 import Foundation
 import SQLiteKit
 
-// Reference to singleton for convenient access
-let sm = StorageManager.shared
-
 /// Class for persisting data to local storage. Uses SQLite.
 final class StorageManager {
     
-    static var shared = StorageManager(file: projectRootPath + "/db.sqlite3")
-    
-    var db: ConnectionPool<SQLiteConnectionSource>!
+    var db = ThreadSpecificVariable<ConnectionPool<SQLiteConnectionSource>>()
+    var dbThreadPool = ThreadSpecificVariable<NIOThreadPool>()
     
     let jsonEncoderDateFormatISO8601WithMilliSeconds: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatISO8601WithMilliSeconds: JSONDecoder = JSONDecoder()
 
     init(
-        file: String,
-        dropTables: Bool = false
+        file: String
     ) {
         
         let dateFormatter = ISO8601DateFormatter()
@@ -45,27 +40,44 @@ final class StorageManager {
             }
             return date
         })
-
-        let threadPool = NIOThreadPool.init(numberOfThreads: 6)
-        let db = SQLiteConnectionSource(
-            configuration: .init(storage: .connection(.file(path: file))), // creates file if missing?
-            threadPool: threadPool,
-            on: storageEventLoop
-        )
-        self.db = ConnectionPool(config: .init(maxConnections: 8), source: db)
         
-        createTables(dropTables: dropTables)
-
+        eventLoopGroup.makeIterator().forEach { eventLoop in
+            try! eventLoop.submit({
+                let threadPool = NIOThreadPool.init(numberOfThreads: 2)
+                self.dbThreadPool.currentValue = threadPool
+//                self.dbThreadPool.currentValue = NIOThreadPool.init(numberOfThreads: 2)
+                let source = SQLiteConnectionSource(
+                    configuration: .init(storage: .connection(.file(path: file))), // creates file if missing?
+                    threadPool: threadPool,
+                    on: eventLoop
+                )
+                let pool = ConnectionPool(config: .init(maxConnections: 8), source: source)
+                self.db.currentValue = pool
+            }).wait()
+        }
+        
+    }
+    
+    deinit {
+        eventLoopGroup.makeIterator().forEach { eventLoop in
+            try! eventLoop.makeSucceededFuture(())
+                .flatMap({_ in
+                    self.db.currentValue!.close()
+                }).flatMapThrowing({_ in
+                    try! self.dbThreadPool.currentValue!.syncShutdownGracefully()
+                }).wait()
+        }
     }
     
     /// Creates the tables (if they don't exist), drops the tables beforehand if dropTables is true.
     /// - returns: Void.
-    func createTables(dropTables: Bool = false) {
-
-        var currentFuture = storageEventLoop.makeSucceededFuture(())
-        
+    func createTables(
+        dropTables: Bool = false,
+        on eventLoop: EventLoop
+    ) -> EventLoopFuture<Void> {
+        //print(MultiThreadedEventLoopGroup.currentEventLoop)
+        var currentFuture = eventLoop.makeSucceededFuture(())
         for type in storedItemConformingTypes.values {
-            
             if (dropTables) {
                 currentFuture = currentFuture
                     .flatMap({
@@ -74,14 +86,12 @@ final class StorageManager {
             }
             currentFuture = currentFuture
                 .flatMap({
-                    type.createTable()
+                    //print(self.db.currentValue!)
+                    //print(self.dbThreadPool.currentValue!)
+                    return type.createTable()
                 })
-            
         }
-        currentFuture.flatMapError({error in
-            print(error)
-            fatalError()
-        })
-
+        return currentFuture
     }
+
 }

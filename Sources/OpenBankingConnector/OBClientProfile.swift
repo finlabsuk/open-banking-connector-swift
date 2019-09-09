@@ -41,7 +41,7 @@ struct OBClientRegistrationData: Codable {
     let client_secret_expires_at: Date?
 }
 
-struct OBClient: StoredItem {
+struct OBClientProfile: StoredItem {
     
     // ********************************************************************************
     // MARK: StoredItem Template Code
@@ -121,9 +121,9 @@ struct OBClient: StoredItem {
         softwareStatementProfileId: String?,
         issuerURL: String?,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
-    ) -> EventLoopFuture<[OBClient]> {
+    ) -> EventLoopFuture<[OBClientProfile]> {
         
-        var builder = sm.db.select()
+        var builder = sm.db.currentValue!.select()
             .column(SQLRaw("json"))
             .from(self.tableName)
         if let id = id {
@@ -138,12 +138,12 @@ struct OBClient: StoredItem {
         let futureOnDBEventLoop = builder.all()
         return futureOnDBEventLoop
             .hop(to: eventLoop)
-            .flatMapThrowing({ rowArray -> [OBClient] in
-                var resultArray = [OBClient]()
+            .flatMapThrowing({ rowArray -> [OBClientProfile] in
+                var resultArray = [OBClientProfile]()
                 for row in rowArray {
                     let dataString: String = try row.decode(column: "json", as: String.self)
-                    let obClient: OBClient = try sm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
-                        OBClient.self,
+                    let obClient: OBClientProfile = try sm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
+                        OBClientProfile.self,
                         from: Data(dataString.utf8)
                     )
                     resultArray.append(obClient)

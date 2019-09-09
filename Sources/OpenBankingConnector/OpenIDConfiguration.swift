@@ -14,6 +14,15 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 
+struct OpenIDConfigurationOverrides: Codable {
+    var registration_endpoint: String?
+    mutating func update(with newOverrides: OpenIDConfigurationOverrides) {
+        if let newValue = newOverrides.registration_endpoint {
+            registration_endpoint = newValue
+        }
+    }
+}
+
 struct OpenIDConfiguration: Codable {
     let issuer: String
     let response_types_supported: [String]

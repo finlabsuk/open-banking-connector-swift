@@ -29,6 +29,8 @@
 import NIO
 import NIOHTTP1
 import Foundation
+import Logging
+import LocalTypes
 
 extension String {
     func chopPrefix(_ prefix: String) -> String? {
@@ -46,6 +48,20 @@ extension String {
             }
         }
         return false
+    }
+    
+    func matchesRegex(regex: NSRegularExpression) -> [String]? {
+        if let firstMatch = regex.firstMatch(in: self, range: NSMakeRange(0, self.utf16.count)) {
+            return (0 ..< firstMatch.numberOfRanges).map {
+                let nsRange = firstMatch.range(at: $0)
+                guard let range = Range(nsRange, in: self) else {
+                    return ""
+                }
+                return String(self[range])
+            }
+        } else {
+            return nil
+        }
     }
 }
 
@@ -445,28 +461,17 @@ private final class HTTPHandler: ChannelInboundHandler {
                     )
                 }
             } else if let path = request.uri.chopPrefix("/register") {
-                let issuerURLArray = request.headers[canonicalForm: "x-obc-issuer-url"]
-                let xFapiFinancialIdArray = request.headers[canonicalForm: "x-fapi-financial-id"]
-                let softwareStatementProfileIdArray = request.headers[canonicalForm: "x-obc-software-statement-profile-id"]
-                let obBaseURLArray = request.headers[canonicalForm: "x-obc-ob-base-url"]
-                let obATAPIVersionArray = request.headers[canonicalForm: "x-obc-ob-at-api-version"]
-                if issuerURLArray.count == 1,
-                    xFapiFinancialIdArray.count == 1,
-                    softwareStatementProfileIdArray.count == 1,
-                    obBaseURLArray.count == 1,
-                    obATAPIVersionArray.count == 1
+                if
+                    path == "",
+                    httpMethod == .POST
                 {
-                    let issuerURL = String(issuerURLArray[0])
-                    let xFapiFinancialId = String(xFapiFinancialIdArray[0])
-                    let softwareStatementProfileId = String(softwareStatementProfileIdArray[0])
-                    let obBaseURL = String(obBaseURLArray[0])
-                    let obATAPIVersion = String(obATAPIVersionArray[0])
-                    self.handler = {
-                        routeHandlerRegister(
-                            context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
-                            issuerURL: issuerURL, xFapiFinancialId: xFapiFinancialId, softwareStatementProfileId: softwareStatementProfileId, obBaseURL: obBaseURL, obAccountAndTransactionAPIVersion: obATAPIVersion
-                        )
-                    }
+                    self.buffer.clear()
+                    self.handler = { endpointHandlerPostRegister(
+                        context: $0,
+                        request: $1,
+                        responseCallback: responseCallback,
+                        buffer: &self.buffer
+                        )}
                 }
             } else if let path = request.uri.chopPrefix("/account-access-consents") {
                 let obClientIDArray = request.headers[canonicalForm: "x-obc-ob-client-id"]
@@ -492,6 +497,24 @@ private final class HTTPHandler: ChannelInboundHandler {
                         buffer: &self.buffer
                         )}
                 }
+            } else if
+                // GET /accounts/{AccountId}/statements/{StatementId}/transactions
+                // GET /accounts/{AccountId}/transactions
+                // GET /transactions
+                let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
+                    pattern: #"^(?:\/accounts\/([\w-]+)(?:\/statements\/([\w-]+))?)?\/transactions$"#
+                    )),
+                let accountAccessConsentID = getSingleValuedHeader(fieldName: "x-obc-account-access-consent-id", headers: request.headers),
+                httpMethod == .GET
+            {
+                self.handler = { endpointHandlerGetAccountTransactionResource(
+                    context: $0,
+                    request: $1,
+                    type: Transaction.self,
+                    regexMatch: regexMatch,
+                    accountAccessConsentID: accountAccessConsentID,
+                    responseCallback: responseCallback
+                    )}
             }
             
             if let handler = self.handler {
@@ -590,10 +613,36 @@ case (let shouldBeProjectRootPath, _, _, _, _):
 
 let htdocs = projectRootPath + "/Sources/OpenBankingConnector/HTTPDocs"
 
+let logLevel: Logger.Level
+#if DEBUG
+logLevel = .debug
+#else
+logLevel = .info
+#endif
+LoggingSystem.bootstrap { label in
+    var handler = StreamLogHandler.standardOutput(label: label)
+    handler.logLevel = logLevel
+    return handler
+}
+
+// Create event loop group
 let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+
+// Create storage manager and database tables
+let sm = StorageManager(file: projectRootPath + "/db.sqlite3")
+try! sm.createTables(
+    dropTables: false,
+    on: eventLoopGroup.next()
+).wait()
+
+// Create HTTP client manager
+let hcm = HTTPClientManager(
+    httpClientEventLoop: eventLoopGroup.next()
+)
+
+// Bootstrap HTTP server
 let threadPool = NIOThreadPool(numberOfThreads: 6)
 threadPool.start()
-
 let fileIO = NonBlockingFileIO(threadPool: threadPool)
 let bootstrap = ServerBootstrap(group: eventLoopGroup)
     // Specify backlog and enable SO_REUSEADDR for the server itself
@@ -611,14 +660,10 @@ let bootstrap = ServerBootstrap(group: eventLoopGroup)
     .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
     .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
     .childChannelOption(ChannelOptions.allowRemoteHalfClosure, value: allowHalfClosure)
-
 defer {
     try! eventLoopGroup.syncShutdownGracefully()
     try! threadPool.syncShutdownGracefully()
 }
-
-let storageEventLoop = eventLoopGroup.next()
-let httpClientEventLoop = eventLoopGroup.next()
 
 let channel = try { () -> Channel in
     switch bindTarget {

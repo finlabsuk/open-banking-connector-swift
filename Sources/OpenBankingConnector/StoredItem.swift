@@ -37,9 +37,9 @@ struct Mutable<V: Codable>: Codable {
 
 /// List of conforming types to allow storage setup etc
 let storedItemConformingTypes: [String: StoredItem.Type] = [
-    OBClient.typeName:                      OBClient.self,
-    SoftwareStatementProfile.typeName:      SoftwareStatementProfile.self,
-    AccountAccessConsent.typeName:          AccountAccessConsent.self
+    OBClientProfile.typeName:                       OBClientProfile.self,
+    SoftwareStatementProfile.typeName:              SoftwareStatementProfile.self,
+    AccountAccessConsent.typeName:                  AccountAccessConsent.self
 ]
 
 /// Data Item that can be persisted in database and synced between devices.
@@ -117,7 +117,7 @@ extension StoredItem {
     }
     
     static func dropTable() -> EventLoopFuture<Void> {
-        return sm.db.drop(table: tableName)
+        return sm.db.currentValue!.drop(table: tableName)
             .ifExists()
             .run()
             .flatMapError({error in
@@ -127,7 +127,7 @@ extension StoredItem {
     }
     
     static func createTable() -> EventLoopFuture<Void> {
-        return sm.db.create(table: tableName)
+        return sm.db.currentValue!.create(table: tableName)
             .ifNotExists()
             .column("id", type: .text, .primaryKey(autoIncrement: false)) // need to add .notNull
             .column("softwareStatementProfileId", type: .text, .notNull)
@@ -145,10 +145,27 @@ extension StoredItem {
     
     func insert() -> EventLoopFuture<Void> {
         print(tableNameTmp)
-        return sm.db.insert(into: tableNameTmp)
+        return sm.db.currentValue!.insert(into: tableNameTmp)
             .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "authState", "json")
             .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId), SQLBind(authState),
                     SQLBind(self.encodeString()))
+            .run()
+            .flatMapError({error in
+                print(error)
+                fatalError()
+            })
+    }
+    
+    func update() -> EventLoopFuture<Void> {
+        sm.db.currentValue!.update(tableNameTmp)
+            .set("id", to: id)
+            .set("softwareStatementProfileId", to: softwareStatementProfileId)
+            .set("issuerURL", to: issuerURL)
+            .set("obClientId", to: obClientId)
+            .set("userId", to: userId)
+            .set("authState", to: authState)
+            .set("json", to: self.encodeString())
+            .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
             .run()
             .flatMapError({error in
                 print(error)

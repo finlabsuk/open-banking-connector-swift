@@ -81,7 +81,7 @@ struct OBRequestObjectClaims: Claims {
     
 }
 
-extension OBClient {
+extension OBClientProfile {
     
     func getOBRequestObjectClaims(
         redirect_uri: String,

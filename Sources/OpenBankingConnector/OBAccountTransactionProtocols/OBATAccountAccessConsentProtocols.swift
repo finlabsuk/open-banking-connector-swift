@@ -13,6 +13,7 @@
 import Foundation
 import NIO
 import AsyncHTTPClient
+import OBATTypes
 
 // MARK:- Account access consent protocols
 
@@ -25,7 +26,7 @@ extension InitProtocol2 {
 
 protocol OBATReadConsentProtocolExposedMethods {
     func httpPost(
-        obClient: OBClient,
+        obClient: OBClientProfile,
         obEndpointPath: String,
         authHeader: String,
         on eventLoop: EventLoop
@@ -60,7 +61,7 @@ extension OBATReadConsentProtocol where OBAIReadResourceDataType: OBAIReadConsen
         self.init(data: data, risk: RiskType())
     }
     func httpPost(
-        obClient: OBClient,
+        obClient: OBClientProfile,
         obEndpointPath: String,
         authHeader: String,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
@@ -140,8 +141,6 @@ extension OBATReadConsentProtocol where OBAIReadResourceDataType: OBAIReadConsen
     }
 }
 
-// MARK:- Account access consent response protocols
-
 protocol OBAIReadConsentDataProtocol: OBAIResourceProtocol {
     associatedtype Permissions: RawRepresentableWithStringRawValue
     var permissions: [Permissions] { get set }
@@ -150,6 +149,8 @@ protocol OBAIReadConsentDataProtocol: OBAIResourceProtocol {
     var transactionToDateTime: Date? { get set }
     init(permissions: [Permissions], expirationDateTime: Date?, transactionFromDateTime: Date?, transactionToDateTime: Date?)
 }
+
+// MARK:- Account access consent response protocols
 
 protocol OBATReadConsentResponseProtocol: OBAIReadResource2Protocol where OBAIReadResourceDataType: OBAIReadConsentResponseDataProtocol { }
 

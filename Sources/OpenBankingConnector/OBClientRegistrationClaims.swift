@@ -15,6 +15,32 @@ import NIO
 import SwiftJWT
 import AsyncHTTPClient
 import NIOFoundationCompat
+import OBATTypes
+
+struct OBClientRegistrationClaimsOverrides: Codable {
+    var aud: String?
+    var token_endpoint_auth_method: String?
+    var grant_types: [String]?
+    var scope__useStringArray: Bool?
+    var token_endpoint_auth_signing_alg: Optional<String?>
+    mutating func update(with newOverrides: OBClientRegistrationClaimsOverrides) {
+        if let newValue = newOverrides.aud {
+            aud = newValue
+        }
+        if let newValue = newOverrides.token_endpoint_auth_method {
+            token_endpoint_auth_method = newValue
+        }
+        if let newValue = newOverrides.grant_types {
+            grant_types = newValue
+        }
+        if let newValue = newOverrides.scope__useStringArray {
+            scope__useStringArray = newValue
+        }
+        if let newValue = newOverrides.token_endpoint_auth_signing_alg {
+            token_endpoint_auth_signing_alg = newValue
+        }
+    }
+}
 
 // See: https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1078034771/Dynamic+Client+Registration+-+v3.2
 struct OBClientRegistrationClaims: Claims, Equatable {
@@ -83,15 +109,18 @@ struct OBClientRegistrationClaims: Claims, Equatable {
         softwareStatementId: String,
         issuerURL: String,
         xFapiFinancialId: String?,
+        obAccountAndTransactionAPIVersion: OBAccountTransactionAPIVersion,
         obAccountTransactionBaseURL: String,
-        aspspOverrides: ASPSPOverrides?,
+        httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?,
+        obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides?,
+        obAccountTransactionAPISettingsOverrides: OBAccountTransactionAPISettingsOverrides?,
         openIDConfiguration: OpenIDConfiguration,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
-    ) -> EventLoopFuture<OBClient> {
+    ) -> EventLoopFuture<OBClientProfile> {
         
         let httpClientMTLSConfiguration = HTTPClientMTLSConfiguration(
             softwareStatementId: softwareStatementId,
-            overrides: aspspOverrides?.httpClientMTLSConfigurationOverrides
+            overrides: httpClientMTLSConfigurationOverrides
         )
         
         // Generate JWS from claims
@@ -118,7 +147,7 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                     var responseObject = try decoder.decode(
                         OBClientRegistrationResponse.self,
                         from: data)
-                    responseObject.applyOverrides(overrides: aspspOverrides?.obClientRegistrationResponseOverrides)
+                    responseObject.applyOverrides(overrides: obClientRegistrationResponseOverrides)
                     print(response.status.code)
                     print(responseObject)
                     return responseObject
@@ -131,8 +160,8 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                 }
             })
             
-            // Check response and create OBClient
-            .flatMapThrowing({ response -> OBClient in
+            // Check response and create OBClientProfile
+            .flatMapThrowing({ response -> OBClientProfile in
                 // Currently not checking these:
                 // let client_id: String
                 // let client_secret: String?
@@ -164,15 +193,19 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                 // let tls_client_auth_subject_dn: String?
                 // precondition(response.tls_client_auth_subject_dn == self.tls_client_auth_subject_dn)
                 
-                // Convert response to OBClient
+                // Convert response to OBClientProfile
                 let registrationData = OBClientRegistrationData(
                     client_id: response.client_id,
                     client_secret: response.client_secret,
                     client_id_issued_at: response.client_id_issued_at,
                     client_secret_expires_at: response.client_secret_expires_at
                 )
-                let obAccountTransactionAPISettings = OBAccountTransactionAPISettings(obBaseURL: obAccountTransactionBaseURL, overrides: aspspOverrides?.obAccountTransactionAPISettingsOverrides)
-                return OBClient(
+                let obAccountTransactionAPISettings = OBAccountTransactionAPISettings(
+                    apiVersion: obAccountAndTransactionAPIVersion,
+                    obBaseURL: obAccountTransactionBaseURL,
+                    overrides: obAccountTransactionAPISettingsOverrides
+                )
+                return OBClientProfile(
                     softwareStatementProfileId: softwareStatementProfileId,
                     issuerURL: issuerURL,
                     xFapiFinancialId: xFapiFinancialId,

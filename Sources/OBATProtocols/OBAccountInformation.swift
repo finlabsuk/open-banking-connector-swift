@@ -13,7 +13,7 @@
 import Foundation
 import NIO
 import AsyncHTTPClient
-import OBATTypes
+//import OBCBaseServices
 
 // HOWTO: To test with different OB spec version
 //
@@ -97,24 +97,24 @@ import OBATTypes
 
 // MARK:- Supporting protocols
 
-protocol RawRepresentableWithStringRawValue: RawRepresentable where RawValue == String { }
+public protocol RawRepresentableWithStringRawValue: RawRepresentable where RawValue == String { }
 
-protocol OBActiveOrHistoricCurrencyAndAmountProtocol {
+public protocol OBActiveOrHistoricCurrencyAndAmountProtocol {
     var amount: String {get}
     var currency: String {get}
 }
 
-protocol OBTransactionCashBalanceProtocol {
+public protocol OBTransactionCashBalanceProtocol {
     associatedtype CreditDebitIndicatorType: RawRepresentableWithStringRawValue
     var nestedAmount: String {get}
     var creditDebitIndicator: CreditDebitIndicatorType {get}
 }
 
-protocol OBStatementDateTimeProtocol {
+public protocol OBStatementDateTimeProtocol {
     var dateTime: Date {get}
 }
 
-protocol OBStatementAmountProtocol {
+public protocol OBStatementAmountProtocol {
     associatedtype CreditDebitIndicatorType: RawRepresentableWithStringRawValue
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     var amount: OBActiveOrHistoricCurrencyAndAmountType {get}
@@ -124,19 +124,19 @@ protocol OBStatementAmountProtocol {
 // MARK:- General protocols for all OB Account Information resources (including Read, ReadData, and Base levels)
 
 // NEW: Top-level protocols with more flexibility
-protocol OBAIReadResourceData2Protocol { }
-protocol OBAIReadResource2Protocol: OBItem {
-    associatedtype OBAIReadResourceDataType: OBAIReadResourceData2Protocol
+public protocol NewOBAIReadResourceData2Protocol { }
+public protocol NewOBAIReadResource2Protocol: NewOBItem {
+    associatedtype OBAIReadResourceDataType: NewOBAIReadResourceData2Protocol
     var data: OBAIReadResourceDataType { get set }
 }
-extension OBAIReadResource2Protocol { public func validateDecoding() throws {} }
+extension NewOBAIReadResource2Protocol { public func validateDecoding() throws {} }
 
-protocol OBAIReadResourceProtocol: OBItem {
-    associatedtype OBAIReadResourceDataType: OBAIReadResourceDataProtocol
+public protocol NewOBAIReadResourceProtocol: NewOBItem {
+    associatedtype OBAIReadResourceDataType: NewOBAIReadResourceDataProtocol
     var data: OBAIReadResourceDataType { get }
 }
 
-extension OBAIReadResourceProtocol {
+extension NewOBAIReadResourceProtocol {
     
     public func validateDecoding() throws {
         if data.resource == nil {
@@ -146,12 +146,12 @@ extension OBAIReadResourceProtocol {
        
 }
 
-protocol OBAIReadResourceDataProtocol: OBAIReadResourceData2Protocol {
-    associatedtype OBAIResourceType: OBAIResourceProtocol
+public protocol NewOBAIReadResourceDataProtocol: NewOBAIReadResourceData2Protocol {
+    associatedtype OBAIResourceType: NewOBAIResourceProtocol
     var resource: [OBAIResourceType]? { get }
 }
 
-protocol OBAIResourceProtocol0: Codable {
+public protocol NewOBAIResourceProtocol0: Codable {
     func encode<K: CodingKey>(
         container: inout KeyedEncodingContainer<K>,
         forKey: KeyedEncodingContainer<K>.Key) throws
@@ -160,13 +160,13 @@ protocol OBAIResourceProtocol0: Codable {
 //        forKey: KeyedDecodingContainer<K>.Key) throws -> Self
 }
 
-extension OBAIResourceProtocol0 {
-    func encode<K: CodingKey>(
+extension NewOBAIResourceProtocol0 {
+    public func encode<K: CodingKey>(
         container: inout KeyedEncodingContainer<K>,
         forKey: KeyedEncodingContainer<K>.Key) throws {
         try container.encode(self, forKey: forKey)
     }
-    static func create<K: CodingKey>(
+    public static func create<K: CodingKey>(
         container: KeyedDecodingContainer<K>,
         forKey: KeyedDecodingContainer<K>.Key) throws -> Self {
         return try container.decode(
@@ -177,19 +177,19 @@ extension OBAIResourceProtocol0 {
 }
 
 // Protocol below for spec-version independent OB resource (e.g OBAccount3, OBTransaction5, etc) description.
-protocol OBAIResourceProtocol: OBAIResourceProtocol0, OBAIReadResourceData2Protocol { // needed also for ASPSP JSON
+public protocol NewOBAIResourceProtocol: NewOBAIResourceProtocol0, NewOBAIReadResourceData2Protocol { // needed also for ASPSP JSON
 }
 
 // MARK:- Account type protocols
 
-protocol OBAIReadAccountDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadAccountDataProtocol: NewOBAIReadResourceDataProtocol {
     var account: [OBAIResourceType]? { get }
 }
 extension OBAIReadAccountDataProtocol {
-    var resource: [OBAIResourceType]? { return account }
+    public var resource: [OBAIResourceType]? { return account }
 }
 
-protocol OBAIAccountProtocol: OBAIResourceProtocol {
+public protocol OBAIAccountProtocol: NewOBAIResourceProtocol {
     var nickname: String? {get}
     var accountId: String {get}
     var currency: String {get}
@@ -197,14 +197,14 @@ protocol OBAIAccountProtocol: OBAIResourceProtocol {
 
 // MARK:- Direct debit type protocols
 
-protocol OBAIReadDirectDebitDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadDirectDebitDataProtocol: NewOBAIReadResourceDataProtocol {
     var directDebit: [OBAIResourceType]? { get }
 }
 extension OBAIReadDirectDebitDataProtocol {
-    var resource: [OBAIResourceType]? { return directDebit }
+    public var resource: [OBAIResourceType]? { return directDebit }
 }
 
-protocol OBAIDirectDebitProtocol: OBAIResourceProtocol {
+public protocol OBAIDirectDebitProtocol: NewOBAIResourceProtocol {
     // TODO: remove version from OBExternalDirectDebitStatus1CodeType
     associatedtype OBExternalDirectDebitStatus1CodeType: RawRepresentableWithStringRawValue
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
@@ -219,14 +219,14 @@ protocol OBAIDirectDebitProtocol: OBAIResourceProtocol {
 
 // MARK:- Balance type protocols
 
-protocol OBAIReadBalanceDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadBalanceDataProtocol: NewOBAIReadResourceDataProtocol {
     var balance: [OBAIResourceType] { get }
 }
 extension OBAIReadBalanceDataProtocol {
-    var resource: [OBAIResourceType]? { return balance }
+    public var resource: [OBAIResourceType]? { return balance }
 }
 
-protocol OBAIBalanceProtocol: OBAIResourceProtocol {
+public protocol OBAIBalanceProtocol: NewOBAIResourceProtocol {
     associatedtype CreditDebitIndicatorType: RawRepresentableWithStringRawValue
     // TODO: remove version from...
     associatedtype OBBalanceType1CodeType: RawRepresentableWithStringRawValue
@@ -241,14 +241,14 @@ protocol OBAIBalanceProtocol: OBAIResourceProtocol {
 
 // MARK:- Standing order type protocols
 
-protocol OBAIReadStandingOrderDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadStandingOrderDataProtocol: NewOBAIReadResourceDataProtocol {
     var standingOrder: [OBAIResourceType]? { get }
 }
 extension OBAIReadStandingOrderDataProtocol {
-    var resource: [OBAIResourceType]? { return standingOrder }
+    public var resource: [OBAIResourceType]? { return standingOrder }
 }
 
-protocol OBAIStandingOrderProtocol: OBAIResourceProtocol {
+public protocol OBAIStandingOrderProtocol: NewOBAIResourceProtocol {
     associatedtype OBActiveOrHistoricCurrencyAndAmountType0: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBActiveOrHistoricCurrencyAndAmountType1: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBActiveOrHistoricCurrencyAndAmountType2: OBActiveOrHistoricCurrencyAndAmountProtocol
@@ -267,21 +267,21 @@ protocol OBAIStandingOrderProtocol: OBAIResourceProtocol {
     var creditorAccount: OBCashAccount5Type? {get}
 }
 
-protocol OBCashAccountProtocol {
+public protocol OBCashAccountProtocol {
     var schemeName: String {get}
     var identification: String {get}
 }
 
 // MARK:- Statement type protocols
 
-protocol OBAIReadStatementDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadStatementDataProtocol: NewOBAIReadResourceDataProtocol {
     var statement: [OBAIResourceType]? { get }
 }
 extension OBAIReadStatementDataProtocol {
-    var resource: [OBAIResourceType]? { return statement }
+    public var resource: [OBAIResourceType]? { return statement }
 }
 
-protocol OBAIStatementProtocol: OBAIResourceProtocol {
+public protocol OBAIStatementProtocol: NewOBAIResourceProtocol {
     // TODO: remove version from...
     associatedtype OBExternalStatementType1CodeType: RawRepresentableWithStringRawValue
     associatedtype OBStatementDateTimeType: OBStatementDateTimeProtocol
@@ -299,14 +299,14 @@ protocol OBAIStatementProtocol: OBAIResourceProtocol {
 
 // MARK:- Scheduled payment type protocols
 
-protocol OBAIReadScheduledPaymentDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadScheduledPaymentDataProtocol: NewOBAIReadResourceDataProtocol {
     var scheduledPayment: [OBAIResourceType]? { get }
 }
 extension OBAIReadScheduledPaymentDataProtocol {
-    var resource: [OBAIResourceType]? { return scheduledPayment }
+    public var resource: [OBAIResourceType]? { return scheduledPayment }
 }
 
-protocol OBAIScheduledPaymentProtocol: OBAIResourceProtocol {
+public protocol OBAIScheduledPaymentProtocol: NewOBAIResourceProtocol {
     // TODO: remove version from...
     associatedtype OBExternalScheduleType1CodeType: RawRepresentableWithStringRawValue
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
@@ -321,14 +321,14 @@ protocol OBAIScheduledPaymentProtocol: OBAIResourceProtocol {
 
 // MARK:- Product type protocols
 
-protocol OBAIReadProductDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadProductDataProtocol: NewOBAIReadResourceDataProtocol {
     var product: [OBAIResourceType]? { get }
 }
 extension OBAIReadProductDataProtocol {
-    var resource: [OBAIResourceType]? { return product }
+    public var resource: [OBAIResourceType]? { return product }
 }
 
-protocol OBAIProductProtocol: OBAIResourceProtocol {
+public protocol OBAIProductProtocol: NewOBAIResourceProtocol {
     // TODO: remove version from...
     associatedtype OBExternalProductType1CodeType: RawRepresentableWithStringRawValue
     var accountId: String { get }
@@ -341,14 +341,14 @@ protocol OBAIProductProtocol: OBAIResourceProtocol {
 
 // MARK:- Offer protocols
 
-protocol OBAIReadOfferDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadOfferDataProtocol: NewOBAIReadResourceDataProtocol {
     var offer: [OBAIResourceType]? { get }
 }
 extension OBAIReadOfferDataProtocol {
-    var resource: [OBAIResourceType]? { return offer }
+    public var resource: [OBAIResourceType]? { return offer }
 }
 
-protocol OBAIOfferProtocol: OBAIResourceProtocol {
+public protocol OBAIOfferProtocol: NewOBAIResourceProtocol {
     associatedtype OBOfferAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBOfferFeeType: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBOfferType: RawRepresentableWithStringRawValue
@@ -370,14 +370,14 @@ protocol OBAIOfferProtocol: OBAIResourceProtocol {
 
 // MARK:- Beneficiary protocols
 
-protocol OBAIReadBeneficiaryDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadBeneficiaryDataProtocol: NewOBAIReadResourceDataProtocol {
     var beneficiary: [OBAIResourceType]? { get }
 }
 extension OBAIReadBeneficiaryDataProtocol {
-    var resource: [OBAIResourceType]? { return beneficiary }
+    public var resource: [OBAIResourceType]? { return beneficiary }
 }
 
-protocol OBAIBeneficiaryProtocol: OBAIResourceProtocol {
+public protocol OBAIBeneficiaryProtocol: NewOBAIResourceProtocol {
     var accountId: String? { get }
     var beneficiaryId: String? { get }
     var reference: String? { get }
@@ -385,16 +385,16 @@ protocol OBAIBeneficiaryProtocol: OBAIResourceProtocol {
 
 // MARK:- Party protocols
 
-protocol OBAIReadPartyDataProtocol: OBAIReadResourceDataProtocol {
+public protocol OBAIReadPartyDataProtocol: NewOBAIReadResourceDataProtocol {
     var party: OBAIResourceType? { get }
 }
 extension OBAIReadPartyDataProtocol {
-    var resource: [OBAIResourceType]? {
+    public var resource: [OBAIResourceType]? {
         return party == nil ? [] : [party!]
     }
 }
 
-protocol OBAIPartyProtocol: OBAIResourceProtocol {
+public protocol OBAIPartyProtocol: NewOBAIResourceProtocol {
     // TODO: remove version from...
     associatedtype OBExternalPartyType1CodeType: RawRepresentableWithStringRawValue
     var partyId: String { get }
@@ -413,56 +413,3 @@ protocol OBAIPartyProtocol: OBAIResourceProtocol {
 
 // MARK:- OBReadWrite Type Names and Protocol
 
-func obATReadConsentType(apiVersion: OBAccountTransactionAPIVersion) -> OBATReadConsentProtocolExposedMethods.Type {
-    switch apiVersion {
-    case .V3p0p0:
-        return OBATV3p0p0Types.obATReadConsentType()
-    case .V3p1p1:
-        return OBATV3p1p1Types.obATReadConsentType()
-    case .V3p1p2:
-        return OBATV3p1p2Types.obATReadConsentType()
-    }
-}
-
-public enum OBAIReadResourceTypeName: String {
-    case OBAIReadAccount
-    //case OBAIReadTransaction
-    case OBAIReadDirectDebit
-    case OBAIReadBalance
-    case OBAIReadStandingOrder
-    case OBAIReadStatement
-    case OBAIReadScheduledPayment
-    case OBAIReadProduct
-    case OBAIReadOffer
-    case OBAIReadBeneficiary
-    case OBAIReadParty
-    case OBAIReadConsent
-    case OBAIReadConsentResponse
-}
-
-extension OBAccountTransactionAPIVersion {
-    func returnOBAIReadResourceType(typeName: OBAIReadResourceTypeName) -> OBItem.Type {
-        switch self {
-        case .V3p0p0:
-            return returnOBAIV3p0p0ReadResourceType(typeName: typeName)
-        case .V3p1p1:
-            return returnOBAIV3p1p1ReadResourceType(typeName: typeName)
-        case .V3p1p2:
-            return returnOBAIV3p1p2ReadResourceType(typeName: typeName)
-            
-        }
-    }
-    
-    func returnOBAIResourceType(typeName: OBAIReadResourceTypeName) -> OBAIResourceProtocol0.Type {
-        switch self {
-        case .V3p0p0:
-            return returnOBAIV3p0p0ResourceType(typeName: typeName)
-        case .V3p1p1:
-            return returnOBAIV3p1p1ResourceType(typeName: typeName)
-        case .V3p1p2:
-            return returnOBAIV3p1p2ResourceType(typeName: typeName)
-            
-        }
-    }
-
-}

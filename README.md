@@ -1,6 +1,6 @@
 # Open Banking Connector
 
-_[NB currently dropping code for 0.0.1 release expected mid to late Sept. That release will be acompanied by full instructions here on how to use....]_
+_[NB currently dropping code for 0.0.1 release expected very soon (sorry for delay). That release will be acompanied by full instructions here on how to use....]_
 
 Open Banking Connector is Open Source software that handles connections to UK Open Banking APIs. It presents to the user a simplified version of the UK Open Banking Read/Write Data APIs and can handle various complexities on their behalf. Specifically it can handle:
 * banks' support of differing versions of the UK Open Banking read/write data API standard (versions 3.0, 3.1, 3.1.1 currently supported)

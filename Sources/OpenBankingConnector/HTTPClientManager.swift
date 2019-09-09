@@ -17,9 +17,6 @@ import NIOSSL
 import NIOHTTP1
 import SQLKit
 
-// Reference to singleton for convenient access
-let hcm = HTTPClientManager.shared
-
 extension NIORenegotiationSupport: RawRepresentable {
     public typealias RawValue = String
     public init?(rawValue: String) {
@@ -60,6 +57,19 @@ extension CertificateVerification: RawRepresentable {
 }
 extension CertificateVerification: Codable { }
 
+struct HTTPClientMTLSConfigurationOverrides: Codable {
+    var tlsCertificateVerification: CertificateVerification?
+    var tlsRenegotiationSupport: NIORenegotiationSupport?
+    mutating func update(with newOverrides: HTTPClientMTLSConfigurationOverrides) {
+        if let newValue = newOverrides.tlsCertificateVerification {
+            tlsCertificateVerification = newValue
+        }
+        if let newValue = newOverrides.tlsRenegotiationSupport {
+            tlsRenegotiationSupport = newValue
+        }
+    }
+}
+
 struct HTTPClientMTLSConfiguration: Hashable, Codable {
     let softwareStatementId: String
     var tlsCertificateVerification: CertificateVerification = .fullVerification
@@ -93,6 +103,14 @@ extension HTTPClientMTLSConfiguration {
 
 // Read-only "dictionary" which returns HTTPClient with correct MTLS based on software statement ID
 final class HttpClientsMTLS { // class rather than struct to allow mutable capture of self in callbacks
+    
+    let httpClientEventLoop: EventLoop
+    
+    init(
+        httpClientEventLoop: EventLoop
+    ) {
+        self.httpClientEventLoop = httpClientEventLoop
+    }
     
     private var dict = [HTTPClientMTLSConfiguration: HTTPClient]()
     
@@ -151,8 +169,6 @@ final class HttpClientsMTLS { // class rather than struct to allow mutable captu
 
 final class HTTPClientManager {
     
-    static var shared = HTTPClientManager()
-    
     let jsonEncoderDateFormatISO8601WithSeconds: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatISO8601WithSeconds: JSONDecoder = JSONDecoder()
     
@@ -165,8 +181,13 @@ final class HTTPClientManager {
     let jsonEncoderDateFormatMilliSecondsSince1970: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatMilliSecondsSince1970: JSONDecoder = JSONDecoder()
     
-    init() {
-        
+    let clientNoMTLS = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
+    
+    let clientsMTLS: HttpClientsMTLS
+    
+    init(
+        httpClientEventLoop: EventLoop
+    ) {
         jsonEncoderDateFormatISO8601WithSeconds.dateEncodingStrategy = .iso8601
         jsonDecoderDateFormatISO8601WithSeconds.dateDecodingStrategy = .iso8601
         
@@ -191,13 +212,10 @@ final class HTTPClientManager {
 
         jsonEncoderDateFormatMilliSecondsSince1970.dateEncodingStrategy = .deferredToDate
         jsonDecoderDateFormatMilliSecondsSince1970.dateDecodingStrategy = .millisecondsSince1970
-
+        
+        clientsMTLS = HttpClientsMTLS(httpClientEventLoop: httpClientEventLoop)
     }
-    
-    let clientNoMTLS = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
-    
-    var clientsMTLS = HttpClientsMTLS()
-    
+
     func getRequestStd(url: URL) -> HTTPClient.Request {
         return try! HTTPClient.Request(
             url: url,
@@ -227,11 +245,27 @@ final class HTTPClientManager {
             "Content-Type": isFormUrlencoded ? "application/x-www-form-urlencoded" : "application/json",
             "Accept": "application/json"
             ]
-            .filter { $1 != nil } // remove Authorization or x-fapi-financial-id if values nil
-            .map { ($0, $1!) } // force unwrap
+            .compactMapValues { $0 } // remove Authorization or x-fapi-financial-id if values nil
+            .map { ($0, $1) }
         return try! HTTPClient.Request(
             url: url,
             method: .POST,
+            headers: HTTPHeaders(headers)
+        )
+    }
+    
+    func getRequest(url: URL, xFapiFinancialId: String?, authHeader: String?) -> HTTPClient.Request {
+        let headers = [
+            "Cache-Control": "no-cache",
+            "x-fapi-financial-id": xFapiFinancialId,
+            "Authorization": authHeader,
+            "Accept": "application/json"
+            ]
+            .compactMapValues { $0 } // remove Authorization or x-fapi-financial-id if values nil
+            .map { ($0, $1) }
+        return try! HTTPClient.Request(
+            url: url,
+            method: .GET,
             headers: HTTPHeaders(headers)
         )
     }
@@ -246,7 +280,7 @@ final class HTTPClientManager {
             on: eventLoop
         )
             .flatMap({ httpClient in
-                return httpClient.execute(request: request, eventLoop: .prefers(eventLoop))
+                return httpClient.execute(request: request, eventLoop: .delegate(on: eventLoop))
             })
             .hop(to: eventLoop)
     }

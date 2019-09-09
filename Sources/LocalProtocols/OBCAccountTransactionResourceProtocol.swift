@@ -10,7 +10,6 @@
 //
 // ********************************************************************************
 
-struct OBCAccountAccessConsentResponse: Codable {
-    let authURL: String
-    let accountAccessConsentId: String
-}
+import Foundation
+
+public protocol OBCAccountTransactionResourceProtocol { }

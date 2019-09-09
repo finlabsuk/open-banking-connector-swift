@@ -29,7 +29,7 @@
       vertical-align: middle;
     }
 
-    .wrapper {  
+    .wrapper {
       max-width: 800px;
     }
 
@@ -47,36 +47,39 @@
       padding: 1em 1em 0.5em;
     }
   </style>
-  </head>
+</head>
 
-  <body>
-    <div class="wrapper">
-      <h6>Open Banking Connector</h6>
-      <a href="https://github.com/finlabsuk/open-banking-connector"> https://github.com/finlabsuk/open-banking-connector </a>
-      <h1>Operation Complete</h1>
-      <h4>Tool or app using Open Banking Connector should close this window automatically</h4>
-    </div>
-    <script>
-      (async () => {
-        //debugger
-        const fragmentParams = window.location.hash.substr(1);
-        if (fragmentParams) {
-          console.log('Fragment supplied.')
-          const params = new URLSearchParams(fragmentParams);
-          params.append('relayedFromFragment', 'true');
-          const newURL = 'fragment-redirect-delegate'; // relative to current URL
-          const response = await fetch(newURL, {
-            method: 'post',
-            body: params,
-            mode: 'same-origin'
-          })
-          console.log('Fragment post complete.')
-          //console.log(response)
-       } else {
-          console.log('No fragment supplied.')
-       }
-      })();
-    </script>
-  </body>
-  
+<body>
+  <div class="wrapper">
+    <h6>Open Banking Connector</h6>
+    <a href="https://github.com/finlabsuk/open-banking-connector"> https://github.com/finlabsuk/open-banking-connector
+    </a>
+    <h1>Operation Complete</h1>
+    <h4>Tool or app using Open Banking Connector should close this window automatically</h4>
+  </div>
+  <script>
+    (async () => {
+      //debugger
+      const fragmentParams = window.location.hash.substr(1);
+      if (fragmentParams) {
+        console.log('Fragment supplied.')
+        const params = new URLSearchParams(fragmentParams);
+        params.append('relayedFromFragment', 'true');
+        const newURL = 'fragment-redirect-delegate'; // relative to current URL
+        const response = await fetch(newURL, {
+          method: 'post',
+          body: params,
+          mode: 'same-origin'
+        })
+        window.pageStatus = 'Fragment post complete.'
+        //console.log(response)
+      } else {
+        window.pageStatus = 'No fragment supplied.'
+      }
+      console.log(window.pageStatus)
+    })();
+  </script>
+  <div id="auth-fragment-redirect" style="display: none;">
+</body>
+
 </html>

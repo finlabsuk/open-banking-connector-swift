@@ -71,7 +71,7 @@ struct SoftwareStatementProfile: StoredItem {
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
         ) -> EventLoopFuture<SoftwareStatementProfile> {
         
-        let futureOnDBEventLoop = sm.db.select()
+        let futureOnDBEventLoop = sm.db.currentValue!.select()
             .column(SQLRaw("json"))
             .from(self.tableName)
             .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))

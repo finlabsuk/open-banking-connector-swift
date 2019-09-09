@@ -16,13 +16,6 @@ typealias OBReadAccountV3p0p0Alias = OBReadAccount2
 typealias OBReadAccountDataV3p0p0Alias = OBReadAccount2Data
 typealias OBAccountV3p0p0Alias = OBAccount2
 
-typealias OBReadTransactionV3p0p0Alias = OBReadTransaction3
-typealias OBReadTransactionDataV3p0p0Alias = OBReadTransaction3Data
-typealias OBTransactionV3p0p0Alias = OBTransaction3
-typealias OBTransactionCDIndicatorV3p0p0Alias = OBTransaction3.CreditDebitIndicator
-typealias OBTransactionBalanceV3p0p0Alias = OBTransactionCashBalance
-typealias OBTransactionBalanceCDIndicatorV3p0p0Alias = OBTransactionCashBalance.CreditDebitIndicator
-
 typealias OBReadDirectDebitV3p0p0Alias = OBReadDirectDebit1
 typealias OBReadDirectDebitDataV3p0p0Alias = OBReadDirectDebit1Data
 typealias OBDirectDebitV3p0p0Alias = OBDirectDebit1
@@ -81,15 +74,22 @@ extension OBAccountV3p0p0Alias: OBAIAccountProtocol { }
 
 // Transaction conformances
 
-extension OBReadTransactionV3p0p0Alias: OBAIReadResourceProtocol { typealias OBAIReadResourceDataType = OBReadTransactionDataV3p0p0Alias }
-extension OBReadTransactionDataV3p0p0Alias: OBAIReadTransactionDataProtocol { typealias OBAIResourceType = OBTransactionV3p0p0Alias }
+fileprivate typealias OBReadTransactionAlias = OBReadTransaction3
+fileprivate typealias OBReadTransactionDataAlias = OBReadTransaction3Data
+fileprivate typealias OBTransactionAlias = OBTransaction3
+fileprivate typealias OBTransactionCDIndicatorAlias = OBTransaction3.CreditDebitIndicator
+fileprivate typealias OBTransactionBalanceAlias = OBTransactionCashBalance
+fileprivate typealias OBTransactionBalanceCDIndicatorAlias = OBTransactionCashBalance.CreditDebitIndicator
 
-extension OBTransactionBalanceCDIndicatorV3p0p0Alias: RawRepresentableWithStringRawValue { }
-extension OBTransactionBalanceV3p0p0Alias: OBTransactionCashBalanceProtocol {
-    var nestedAmount: String { return amount.amount }
-}
-extension OBTransactionCDIndicatorV3p0p0Alias: RawRepresentableWithStringRawValue {}
-extension OBTransactionV3p0p0Alias: OBAITransactionProtocol {
+//extension OBReadTransactionAlias: OBATReadTransactionProtocol {
+//    typealias OBAIReadResourceDataType = OBReadTransaction3Data }
+//extension OBReadTransactionDataAlias: OBAIReadTransactionDataProtocol { typealias OBAIResourceType = OBTransaction3 }
+extension OBTransactionCDIndicatorAlias: RawRepresentableWithStringRawValue {}
+//extension OBTransactionAlias: OBAITransactionProtocol {
+//    var nestedAmount: String { return amount.amount }
+//}
+extension OBTransactionBalanceCDIndicatorAlias: RawRepresentableWithStringRawValue {}
+extension OBTransactionBalanceAlias: OBTransactionCashBalanceProtocol {
     var nestedAmount: String { return amount.amount }
 }
 
@@ -203,7 +203,7 @@ extension OBReadConsentResponseDataAlias: OBAIReadConsentResponseDataProtocol { 
 func returnOBAIV3p0p0ReadResourceType(typeName: OBAIReadResourceTypeName) -> OBItem.Type {
     switch typeName {
     case .OBAIReadAccount: return OBReadAccountV3p0p0Alias.self
-    case .OBAIReadTransaction: return OBReadTransactionV3p0p0Alias.self
+//    case .OBAIReadTransaction: return OBReadTransactionAlias.self
     case .OBAIReadDirectDebit: return OBReadDirectDebitV3p0p0Alias.self
     case .OBAIReadBalance: return OBReadBalanceV3p0p0Alias.self
     case .OBAIReadStandingOrder: return OBReadStandingOrderV3p0p0Alias.self
@@ -221,7 +221,7 @@ func returnOBAIV3p0p0ReadResourceType(typeName: OBAIReadResourceTypeName) -> OBI
 func returnOBAIV3p0p0ResourceType(typeName: OBAIReadResourceTypeName) -> OBAIResourceProtocol0.Type {
     switch typeName {
     case .OBAIReadAccount: return OBAccountV3p0p0Alias.self
-    case .OBAIReadTransaction: return OBTransactionV3p0p0Alias.self
+//    case .OBAIReadTransaction: return OBTransactionAlias.self
     case .OBAIReadDirectDebit: return OBDirectDebitV3p0p0Alias.self
     case .OBAIReadBalance: return OBBalanceV3p0p0Alias.self
     case .OBAIReadStandingOrder: return OBStandingOrderV3p0p0Alias.self
@@ -243,4 +243,8 @@ class OBATV3p0p0Types {
         return OBReadConsentAlias.self
     }
     
+//    static func obATReadTransactionType() -> OBATReadTransactionProtocolExposedMethods.Type {
+//        return OBReadTransactionAlias.self
+//    }
+
 }

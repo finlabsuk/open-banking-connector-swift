@@ -35,30 +35,41 @@ func routeHandlerAuth(
             buffer.writeBuffer(&buf)
         case .end:
             
+            var accountAccessConsent: AccountAccessConsent!
+            
             // Validate body data
-            let softwareStatementProfiles: [SoftwareStatementProfile]
-            do {
-                let bufString = buffer.readString(length: buffer.readableBytes)!
-                let authData = OBAuthData(input: bufString)
-                
-                
-                
-            } catch {
-                print(error)
-                responseCallback(.badRequest, try! JSONEncoder().encode("\(error)"))
-                return
-            }
+            let bufString = buffer.readString(length: buffer.readableBytes)!
+            let authData = OBAuthData(input: bufString)
             
-            // Save software statement profiles
-            var currentFuture = context.eventLoop.makeSucceededFuture(())
-//            for softwareStatementProfile in softwareStatementProfiles {
-//                currentFuture = currentFuture.flatMap({ softwareStatementProfile.insert() })
-//            }
-            
-            currentFuture
+            context.eventLoop.makeSucceededFuture(())
+                
+                // Load relevant consent
+                .flatMap({ () -> EventLoopFuture<[AccountAccessConsent]> in
+                    return AccountAccessConsent.load(
+                        id: nil,
+                        authState: authData.state
+                    )
+                })
+                
+                // Post authorisation code grant request
+                .flatMap({accountAccessConsentArray -> EventLoopFuture<OBTokenEndpointResponse> in
+                    guard accountAccessConsentArray.count == 1 else {
+                        fatalError()
+                    }
+                    accountAccessConsent = accountAccessConsentArray[0]
+                    return accountAccessConsent.httpPostAuthCodeGrant(code: authData.code)
+                })
+                
+                // Update consent with response
+                .flatMap({ obTokenEndpointResponse -> EventLoopFuture<Void> in
+                    print(obTokenEndpointResponse)
+                    accountAccessConsent.obTokenEndpointResponse = obTokenEndpointResponse
+                    return accountAccessConsent.update()
+                })
+                
                 
                 // Send success response
-                .flatMapThrowing({
+                .flatMapThrowing({_ in
                     struct ReturnType: Encodable { let message: String }
                     let returnJson = try! JSONEncoder().encode(ReturnType(message: "Success"))
                     responseCallback(.created, returnJson)

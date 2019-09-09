@@ -14,6 +14,15 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 
+struct OBClientRegistrationResponseOverrides: Codable {
+    var grant_types: [String]?
+    mutating func update(with newOverrides: OBClientRegistrationResponseOverrides) {
+        if let newValue = newOverrides.grant_types {
+            grant_types = newValue
+        }
+    }
+}
+
 // See: https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1078034771/Dynamic+Client+Registration+-+v3.2
 struct OBClientRegistrationResponse: Decodable {
     let client_id: String

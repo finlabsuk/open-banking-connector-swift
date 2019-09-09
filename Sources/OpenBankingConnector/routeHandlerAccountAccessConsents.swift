@@ -32,13 +32,13 @@ func routeHandlerAccountAccessConsents(
         switch (httpMethod, path) {
         case (.POST, ""):
             
-            var obClient: OBClient!
+            var obClient: OBClientProfile!
             var accountAccessConsent: AccountAccessConsent!
                         
             context.eventLoop.makeSucceededFuture(())
                 
                 // Load OB client
-                .flatMap({ OBClient.load(
+                .flatMap({ OBClientProfile.load(
                         id: obClientID,
                         softwareStatementProfileId: nil,
                         issuerURL: nil
@@ -68,7 +68,7 @@ func routeHandlerAccountAccessConsents(
                         transactionToDateTime: transactionToDateTime
                     )
                     
-                    return instance.httpPost(obClient: obClient, obEndpointPath: "/aisp/account-access-consents", authHeader: "Bearer " + obTokenEndpointResponse.access_token, on: MultiThreadedEventLoopGroup.currentEventLoop!)
+                    return instance.httpPost(obClient: obClient, obEndpointPath: "/account-access-consents", authHeader: "Bearer " + obTokenEndpointResponse.access_token, on: MultiThreadedEventLoopGroup.currentEventLoop!)
                 })
                 
                 // Save account access consent
@@ -87,7 +87,7 @@ func routeHandlerAccountAccessConsents(
                 
                 // Send success response
                 .flatMapThrowing({ authURL in
-                    let response = OBCAccountAccessConsentResponse(authURL: authURL, accountAccessConsentId: accountAccessConsent.id)
+                    let response = AccountAccessConsentResponse(authURL: authURL, accountAccessConsentId: accountAccessConsent.id)
                     let returnJson = try! JSONEncoder().encode(response)
                     responseCallback(.created, returnJson)
                 })

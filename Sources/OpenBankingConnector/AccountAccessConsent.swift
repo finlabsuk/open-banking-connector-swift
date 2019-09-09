@@ -54,7 +54,7 @@ struct AccountAccessConsent: StoredItem {
     
     let obRequestObjectClaims: OBRequestObjectClaims
     
-    let obTokenEndpointResponse: OBTokenEndpointResponse? = nil
+    var obTokenEndpointResponse: OBTokenEndpointResponse? = nil
     
     init(
         softwareStatementProfileId: String,
@@ -74,7 +74,7 @@ struct AccountAccessConsent: StoredItem {
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
     ) -> EventLoopFuture<[AccountAccessConsent]> {
         
-        var builder = sm.db.select()
+        var builder = sm.db.currentValue!.select()
             .column(SQLRaw("json"))
             .from(self.tableName)
         if let id = id {
@@ -113,7 +113,7 @@ struct AccountAccessConsent: StoredItem {
         return eventLoop.makeSucceededFuture(())
             
             // Load OB client
-            .flatMap({ OBClient.load(
+            .flatMap({ OBClientProfile.load(
                 id: self.obClientId,
                     softwareStatementProfileId: nil,
                     issuerURL: nil
