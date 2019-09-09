@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 import NIO
 import NIOHTTP1
+import Foundation
 
 extension String {
     func chopPrefix(_ prefix: String) -> String? {
@@ -421,15 +422,15 @@ private final class HTTPHandler: ChannelInboundHandler {
         case .head(let request):
             
             // Set up response callback
-            func responseCallback(status: HTTPResponseStatus = .ok, string: String) {
+            func responseCallback(status: HTTPResponseStatus = .ok, data: Data) {
                 self.state.requestComplete()
                 
                 let responseHead = httpResponseHead(request: request, status: status)
                 // TODO: add any headers
                 context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil) // writeAndFlush?
                 
-                var responseBuffer = context.channel.allocator.buffer(capacity: string.utf8.count)
-                responseBuffer.writeString(string)
+                var responseBuffer = context.channel.allocator.buffer(capacity: data.count)
+                responseBuffer.writeBytes(data)
                 context.write(self.wrapOutboundOut(.body(.byteBuffer(responseBuffer))), promise: nil)
                 
                 self.completeResponse(context, trailers: nil, promise: nil)

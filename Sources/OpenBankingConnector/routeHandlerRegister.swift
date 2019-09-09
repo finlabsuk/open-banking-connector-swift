@@ -24,7 +24,7 @@ func routeHandlerRegister(
     request: HTTPServerRequestPart,
     httpMethod: HTTPMethod,
     path: String,
-    responseCallback: @escaping (HTTPResponseStatus, String) -> Void,
+    responseCallback: @escaping (HTTPResponseStatus, Data) -> Void,
     issuerURL: String,
     softwareStatementProfileId: String
     ) {
@@ -69,17 +69,17 @@ func routeHandlerRegister(
                 })
                 
                 // If any has same registration claims, use that else create and save new OB client
-                .flatMap({obClientArray -> EventLoopFuture<Void> in
+                .flatMap({obClientArray -> EventLoopFuture<String> in
                     //print(obClientRegistrationClaims)
-                    var haveMatch = false
+                    var obClientId: String?
                     for obClient in obClientArray {
                         if obClient.registrationClaims == obClientRegistrationClaims {
-                            haveMatch = true
+                            obClientId = obClient.id
                         }
                     }
                     //print("HaveMatch: \(haveMatch)")
-                    if haveMatch {
-                        return context.eventLoop.makeSucceededFuture(())
+                    if let obClientIdUnwrapped = obClientId {
+                        return context.eventLoop.makeSucceededFuture(obClientIdUnwrapped)
                     } else {
                         
                         // Post OB client registration claims
@@ -93,19 +93,26 @@ func routeHandlerRegister(
                         )
                             // Save OB client
                             .flatMap({
-                                obClient in obClient.insert()
+                                obClient in
+                                obClientId = obClient.id
+                                return obClient.insert()
                             })
+                            .flatMapThrowing {
+                                return obClientId!
+                        }
                     }
                 })
                 
                 // Send success response
-                .flatMapThrowing({
-                    responseCallback(.created, "Success text")
+                .flatMapThrowing({ obClientId in
+                    struct ReturnType: Encodable { let id: String }
+                    let returnJson = try! JSONEncoder().encode(ReturnType(id: obClientId))
+                    responseCallback(.created, returnJson)
                 })
                 
                 // Send failure response
                 .whenFailure({
-                    error in responseCallback(.internalServerError, "\(error)")
+                    error in responseCallback(.internalServerError, try! JSONEncoder().encode("\(error)"))
                 })
             
         default: break;

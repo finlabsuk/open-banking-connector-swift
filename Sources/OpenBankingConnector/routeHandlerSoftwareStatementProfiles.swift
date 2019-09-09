@@ -22,7 +22,7 @@ func routeHandlerSoftwareStatementProfiles(
     request: HTTPServerRequestPart,
     httpMethod: HTTPMethod,
     path: String,
-    responseCallback: @escaping (HTTPResponseStatus, String) -> Void,
+    responseCallback: @escaping (HTTPResponseStatus, Data) -> Void,
     buffer: inout ByteBuffer
 ) {
     
@@ -43,7 +43,7 @@ func routeHandlerSoftwareStatementProfiles(
                 print(softwareStatementProfiles)
             } catch {
                 print(error)
-                responseCallback(.badRequest, "Bad input...")
+                responseCallback(.badRequest, try! JSONEncoder().encode("\(error)"))
                 return
             }
             
@@ -56,11 +56,10 @@ func routeHandlerSoftwareStatementProfiles(
             currentFuture
                 
                 // Send success response
-                .flatMapThrowing { responseCallback(.created, "Success text") }
+                .flatMapThrowing { responseCallback(.created, try! JSONEncoder().encode("Success text")) }
                 
                 // Send failure response
-                .whenFailure { error in responseCallback(.internalServerError, "\(error)") }
-
+                .whenFailure { error in responseCallback(.internalServerError, try! JSONEncoder().encode("\(error)")) }
             
         }
         
