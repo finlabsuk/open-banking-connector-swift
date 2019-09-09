@@ -43,8 +43,11 @@ struct SoftwareStatementProfile: StoredItem {
     /// "User identity"
     let userId: String = ""
     
+    /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
+    var authState: String = ""
+    
     // Timestamp for object creation as best we can determine
-    let created: Date = Date()
+    var created: Date = Date()
       
     // Deletion status for object
     //@Mutable var isDeleted: Bool = false
@@ -78,7 +81,7 @@ struct SoftwareStatementProfile: StoredItem {
             .flatMapThrowing({ rowArray -> SoftwareStatementProfile in
                 let row: SQLRow = rowArray[0]
                 let softwareStatementString: String = try row.decode(column: "json", as: String.self)
-                let softwareStatement: SoftwareStatementProfile = try sm.jsonDecoder.decode(
+                let softwareStatement: SoftwareStatementProfile = try sm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
                     SoftwareStatementProfile.self,
                     from: Data(softwareStatementString.utf8)
                 )

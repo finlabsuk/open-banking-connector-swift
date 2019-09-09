@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="cache-control" content="max-age=0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Complete</title>
+  <style>
+    body,
+    div,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    span,
+    b {
+      font-family: 'SF-Pro-Display', Roboto, Sans-Serif;
+      background-color: #fff;
+      color: #212121;
+      margin: 0 auto;
+      padding: 0;
+      font-style: normal;
+      font-size: 1rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .wrapper {  
+      max-width: 800px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      padding: 2em 0.5em 1em 0.5em;
+    }
+
+    h4 {
+      font-size: 1.5rem;
+      padding: 0.5em 0.5em;
+    }
+
+    h6 {
+      padding: 1em 1em 0.5em;
+    }
+  </style>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <h6>Open Banking Connector</h6>
+      <a href="https://github.com/finlabsuk/open-banking-connector"> https://github.com/finlabsuk/open-banking-connector </a>
+      <h1>Operation Complete</h1>
+      <h4>Tool or app using Open Banking Connector should close this window automatically</h4>
+    </div>
+    <script>
+      (async () => {
+        //debugger
+        const fragmentParams = window.location.hash.substr(1);
+        if (fragmentParams) {
+          console.log('Fragment supplied.')
+          const params = new URLSearchParams(fragmentParams);
+          params.append('relayedFromFragment', 'true');
+          const newURL = 'fragment-redirect-delegate'; // relative to current URL
+          const response = await fetch(newURL, {
+            method: 'post',
+            body: params,
+            mode: 'same-origin'
+          })
+          console.log('Fragment post complete.')
+          //console.log(response)
+       } else {
+          console.log('No fragment supplied.')
+       }
+      })();
+    </script>
+  </body>
+  
+</html>

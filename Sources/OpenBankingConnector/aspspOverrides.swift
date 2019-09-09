@@ -69,11 +69,25 @@ struct HTTPClientMTLSConfigurationOverrides {
     }
 }
 
+struct OBAccountTransactionAPISettingsOverrides {
+    var apiVersion: OBAccountTransactionAPIVersion?
+    var accountAccessConsentPermissions: [OBAccountTransactionAccountAccessConsentPermissions]?
+    mutating func update(with newOverrides: OBAccountTransactionAPISettingsOverrides) {
+        if let newValue = newOverrides.apiVersion {
+            apiVersion = newValue
+        }
+        if let newValue = newOverrides.accountAccessConsentPermissions {
+            accountAccessConsentPermissions = newValue
+        }
+    }
+}
+
 struct ASPSPOverrides {
     var openIDConfigurationOverrides: OpenIDConfigurationOverrides?
     var httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?
     var obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides?
     var obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides?
+    var obAccountTransactionAPISettingsOverrides: OBAccountTransactionAPISettingsOverrides?
     var children: [String: ASPSPOverrides]?
     mutating func update(with newOverrides: ASPSPOverrides) {
         if let newValue = newOverrides.openIDConfigurationOverrides {
@@ -104,7 +118,13 @@ struct ASPSPOverrides {
             } else {
                 obClientRegistrationResponseOverrides = newValue
             }
-            
+        }
+        if let newValue = newOverrides.obAccountTransactionAPISettingsOverrides {
+            if var obAccountTransactionAPISettingsOverrides = obAccountTransactionAPISettingsOverrides {
+                obAccountTransactionAPISettingsOverrides.update(with: newValue)
+            } else {
+                obAccountTransactionAPISettingsOverrides = newValue
+            }
         }
         children = newOverrides.children
     }
@@ -123,52 +143,4 @@ func getASPSPOverrides(issuerURL: String) -> ASPSPOverrides? {
     }
 }
 
-let aspspOverrides: [String: ASPSPOverrides] = [
-    "https://modelobankauth2018.o3bank.co.uk:4101": ASPSPOverrides(
-        openIDConfigurationOverrides: nil,
-//        openIDConfigurationOverrides: OpenIDConfigurationOverrides(
-//            registration_endpoint: "https://modelobank2018.o3bank.co.uk:4501/reg"
-//        ),
-        httpClientMTLSConfigurationOverrides: nil,
-        obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
-            aud: nil,
-            token_endpoint_auth_method: nil,
-            grant_types: ["client_credentials", "authorization_code"],
-            scope__useStringArray: nil,
-            token_endpoint_auth_signing_alg: "PS256"
-        ),
-        obClientRegistrationResponseOverrides: nil,
-        children: nil
-    ),
-    "https://api.newdaycards.com": ASPSPOverrides(
-        openIDConfigurationOverrides: nil,
-        httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides(
-            tlsCertificateVerification: CertificateVerification.none,
-            tlsRenegotiationSupport: .once
-        ),
-        obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
-            aud: nil,
-            token_endpoint_auth_method: "client_secret_basic",
-            grant_types: nil,
-            scope__useStringArray: nil,
-            token_endpoint_auth_signing_alg: "PS256"
-        ),
-        obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides(
-            grant_types: ["client_credentials", "authorization_code", "refresh_token"]
-        ),
-       children: nil
-    ),
-    "https://api.natwest.useinfinite.io": ASPSPOverrides(
-        openIDConfigurationOverrides: nil,
-        httpClientMTLSConfigurationOverrides: nil,
-        obClientRegistrationClaimsOverrides: OBClientRegistrationClaimsOverrides(
-            aud: "https://ob.natwest.useinfinite.io",
-            token_endpoint_auth_method: nil,
-            grant_types: nil,
-            scope__useStringArray: true,
-            token_endpoint_auth_signing_alg: nil
-        ),
-        obClientRegistrationResponseOverrides: nil,
-       children: nil
-    )
-]
+let aspspOverrides = [String: ASPSPOverrides]()

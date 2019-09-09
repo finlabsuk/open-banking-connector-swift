@@ -27,8 +27,17 @@ let package = Package(
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
+            name: "OBReadWriteV3p0",
+            dependencies: []),
+        .target(
+            name: "OBReadWriteV3p1p1",
+            dependencies: []),
+        .target(
+            name: "OBReadWriteV3p1p2",
+            dependencies: []),
+        .target(
             name: "OpenBankingConnector",
-            dependencies: ["NIO", "NIOHTTP1", "NIOFoundationCompat", "AsyncHTTPClient", "SwiftJWT", "SQLiteKit", "SQLKit", "Logging"]),
+            dependencies: ["NIO", "NIOHTTP1", "NIOFoundationCompat", "AsyncHTTPClient", "SwiftJWT", "SQLiteKit", "SQLKit", "Logging", "OBReadWriteV3p0", "OBReadWriteV3p1p1", "OBReadWriteV3p1p2"]),
         .testTarget(
             name: "OpenBankingConnectorTests",
             dependencies: ["OpenBankingConnector"]),

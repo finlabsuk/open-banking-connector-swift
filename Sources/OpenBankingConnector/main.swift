@@ -325,14 +325,12 @@ private final class HTTPHandler: ChannelInboundHandler {
         func responseHead(request: HTTPRequestHead, fileRegion region: FileRegion) -> HTTPResponseHead {
             var response = httpResponseHead(request: request, status: .ok)
             response.headers.add(name: "Content-Length", value: "\(region.endIndex)")
-            response.headers.add(name: "Content-Type", value: "text/plain; charset=utf-8")
+            response.headers.add(name: "Content-Type", value: "text/html; charset=utf-8")
             return response
         }
 
         switch request {
         case .head(let request):
-            self.keepAlive = request.isKeepAlive
-            self.state.requestReceived()
             guard !request.uri.containsDotDot() else {
                 let response = httpResponseHead(request: request, status: .forbidden)
                 context.write(self.wrapOutboundOut(.head(response)), promise: nil)
@@ -448,17 +446,51 @@ private final class HTTPHandler: ChannelInboundHandler {
                 }
             } else if let path = request.uri.chopPrefix("/register") {
                 let issuerURLArray = request.headers[canonicalForm: "x-obc-issuer-url"]
+                let xFapiFinancialIdArray = request.headers[canonicalForm: "x-fapi-financial-id"]
                 let softwareStatementProfileIdArray = request.headers[canonicalForm: "x-obc-software-statement-profile-id"]
+                let obBaseURLArray = request.headers[canonicalForm: "x-obc-ob-base-url"]
+                let obATAPIVersionArray = request.headers[canonicalForm: "x-obc-ob-at-api-version"]
                 if issuerURLArray.count == 1,
-                    softwareStatementProfileIdArray.count == 1 {
+                    xFapiFinancialIdArray.count == 1,
+                    softwareStatementProfileIdArray.count == 1,
+                    obBaseURLArray.count == 1,
+                    obATAPIVersionArray.count == 1
+                {
                     let issuerURL = String(issuerURLArray[0])
+                    let xFapiFinancialId = String(xFapiFinancialIdArray[0])
                     let softwareStatementProfileId = String(softwareStatementProfileIdArray[0])
+                    let obBaseURL = String(obBaseURLArray[0])
+                    let obATAPIVersion = String(obATAPIVersionArray[0])
                     self.handler = {
                         routeHandlerRegister(
                             context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
-                            issuerURL: issuerURL, softwareStatementProfileId: softwareStatementProfileId
+                            issuerURL: issuerURL, xFapiFinancialId: xFapiFinancialId, softwareStatementProfileId: softwareStatementProfileId, obBaseURL: obBaseURL, obAccountAndTransactionAPIVersion: obATAPIVersion
                         )
                     }
+                }
+            } else if let path = request.uri.chopPrefix("/account-access-consents") {
+                let obClientIDArray = request.headers[canonicalForm: "x-obc-ob-client-id"]
+                if obClientIDArray.count == 1 {
+                    let obClientID = String(obClientIDArray[0])
+                    self.handler = {
+                        routeHandlerAccountAccessConsents(
+                            context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
+                            obClientID: obClientID
+                        )
+                    }
+                }
+            } else if let path = request.uri.chopPrefix("/auth") {
+                if path == "/fragment-redirect",
+                    httpMethod == .GET
+                {
+                    self.handler = { self.handleFile(context: $0, request: $1, ioMethod: .nonblockingFileIO, path: "/auth-fragment-redirect.html")
+                    }
+                } else {
+                    self.buffer.clear()
+                    self.handler = { routeHandlerAuth(
+                        context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
+                        buffer: &self.buffer
+                        )}
                 }
             }
             
@@ -522,33 +554,41 @@ let arg3 = arguments.dropFirst(3).first
 
 let defaultHost = "::1"
 let defaultPort = 8888
-let defaultHtdocs = "/dev/null/"
+
+let projectRootPath: String
 
 enum BindTo {
     case ip(host: String, port: Int)
     case unixDomainSocket(path: String)
 }
 
-let htdocs: String
 let bindTarget: BindTo
 
 switch (arg1, arg1.flatMap(Int.init), arg2, arg2.flatMap(Int.init), arg3) {
-case (.some(let h), _ , _, .some(let p), let maybeHtdocs):
-    /* second arg an integer --> host port [htdocs] */
+case (.some(let h), _ , _, .some(let p), let shouldBeProjectRootPath):
+    /* second arg an integer --> host port path */
     bindTarget = .ip(host: h, port: p)
-    htdocs = maybeHtdocs ?? defaultHtdocs
-case (_, .some(let p), let maybeHtdocs, _, _):
-    /* first arg an integer --> port [htdocs] */
+    guard let projectRootPathTmp = shouldBeProjectRootPath else {
+        fatalError("Second arg detected as Int (fine). But third arg not detectable as project root folder path (not fine).")
+    }
+    projectRootPath = projectRootPathTmp
+case (_, .some(let p), let shouldBeProjectRootPath, _, _):
+    /* first arg an integer --> port path */
     bindTarget = .ip(host: defaultHost, port: p)
-    htdocs = maybeHtdocs ?? defaultHtdocs
-case (.some(let portString), .none, let maybeHtdocs, .none, .none):
-    /* couldn't parse as number --> uds-path [htdocs] */
-    bindTarget = .unixDomainSocket(path: portString)
-    htdocs = maybeHtdocs ?? defaultHtdocs
-default:
-    htdocs = defaultHtdocs
+    guard let projectRootPathTmp = shouldBeProjectRootPath else {
+        fatalError("First but not second arg detected as Int (fine). But second arg not detectable as project root folder path (not fine).")
+    }
+    projectRootPath = projectRootPathTmp
+case (let shouldBeProjectRootPath, _, _, _, _):
+    /* no integers --> path */
     bindTarget = BindTo.ip(host: defaultHost, port: defaultPort)
+    guard let projectRootPathTmp = shouldBeProjectRootPath else {
+        fatalError("First and second arguments not detected as Int (fine). But first arg not detectable as project root folder path (not fine).")
+    }
+    projectRootPath = projectRootPathTmp
 }
+
+let htdocs = projectRootPath + "/Sources/OpenBankingConnector/HTTPDocs"
 
 let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 let threadPool = NIOThreadPool(numberOfThreads: 6)
@@ -580,8 +620,6 @@ defer {
 let storageEventLoop = eventLoopGroup.next()
 let httpClientEventLoop = eventLoopGroup.next()
 
-print("htdocs = \(htdocs)")
-
 let channel = try { () -> Channel in
     switch bindTarget {
     case .ip(let host, let port):
@@ -594,7 +632,7 @@ let channel = try { () -> Channel in
 guard let localAddress = channel.localAddress else {
     fatalError("Address was unable to bind. Please check that the socket was not closed or that the address family was understood.")
 }
-print("Server started and listening on \(localAddress), htdocs path \(htdocs)")
+print("Server started and listening on \(localAddress), project root path \(projectRootPath)")
 
 // This will never unblock as we don't close the ServerChannel
 try channel.closeFuture.wait()

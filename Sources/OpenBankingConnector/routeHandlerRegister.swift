@@ -26,7 +26,10 @@ func routeHandlerRegister(
     path: String,
     responseCallback: @escaping (HTTPResponseStatus, Data) -> Void,
     issuerURL: String,
-    softwareStatementProfileId: String
+    xFapiFinancialId: String,
+    softwareStatementProfileId: String,
+    obBaseURL: String,
+    obAccountAndTransactionAPIVersion: String
     ) {
     
     // Wait until request fully received
@@ -36,7 +39,7 @@ func routeHandlerRegister(
         case (.POST, ""):
             
             let aspspOverrides = getASPSPOverrides(issuerURL: issuerURL)
-            var issuerRegistrationEndpoint: String!
+            var openIDConfiguration: OpenIDConfiguration!
             var obClientRegistrationClaims: OBClientRegistrationClaims!
             
             context.eventLoop.makeSucceededFuture(())
@@ -49,8 +52,8 @@ func routeHandlerRegister(
                 })
                 
                 // Create OB client registration claims
-                .flatMap({ openIDConfiguration -> EventLoopFuture<OBClientRegistrationClaims> in
-                    issuerRegistrationEndpoint = openIDConfiguration.registration_endpoint
+                .flatMap({ openIDConfigurationLocal -> EventLoopFuture<OBClientRegistrationClaims> in
+                    openIDConfiguration = openIDConfigurationLocal
                     return OBClientRegistrationClaims.initAsync(
                         issuerURL: issuerURL,
                         softwareStatementId: softwareStatementProfileId,
@@ -87,9 +90,10 @@ func routeHandlerRegister(
                             softwareStatementProfileId: softwareStatementProfileId,
                             softwareStatementId: softwareStatementProfileId,
                             issuerURL: issuerURL,
-                            issuerRegistrationURL: issuerRegistrationEndpoint,
-                            httpClientMTLSConfigurationOverrides: aspspOverrides?.httpClientMTLSConfigurationOverrides,
-                            obClientRegistrationResponseOverrides: aspspOverrides?.obClientRegistrationResponseOverrides
+                            xFapiFinancialId: xFapiFinancialId,
+                            obAccountTransactionBaseURL: obBaseURL,
+                            aspspOverrides: aspspOverrides,
+                            openIDConfiguration: openIDConfiguration
                         )
                             // Save OB client
                             .flatMap({
@@ -111,8 +115,10 @@ func routeHandlerRegister(
                 })
                 
                 // Send failure response
-                .whenFailure({
-                    error in responseCallback(.internalServerError, try! JSONEncoder().encode("\(error)"))
+                .whenFailure({error in
+                    struct ReturnType: Encodable { let error: String }
+                    let returnJson = try! JSONEncoder().encode(ReturnType(error: "\(error)"))
+                    responseCallback(.internalServerError, returnJson)
                 })
             
         default: break;

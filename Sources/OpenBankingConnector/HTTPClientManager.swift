@@ -14,12 +14,53 @@ import Foundation
 import AsyncHTTPClient
 import NIO
 import NIOSSL
+import NIOHTTP1
 import SQLKit
 
 // Reference to singleton for convenient access
 let hcm = HTTPClientManager.shared
 
-struct HTTPClientMTLSConfiguration: Hashable {
+extension NIORenegotiationSupport: RawRepresentable {
+    public typealias RawValue = String
+    public init?(rawValue: String) {
+        switch rawValue {
+        case "none": self = .none
+        case "once": self = .once
+        case "always": self = .always
+        default: return nil
+        }
+    }
+    public var rawValue: String {
+        switch self {
+        case .none: return "none"
+        case .once: return "once"
+        case .always: return "always"
+        }
+    }
+}
+extension NIORenegotiationSupport: Codable { }
+
+extension CertificateVerification: RawRepresentable {
+    public typealias RawValue = String
+    public init?(rawValue: String) {
+        switch rawValue {
+        case "none": self = .none
+        case "noHostnameVerification": self = .noHostnameVerification
+        case "fullVerification": self = .fullVerification
+        default: return nil
+        }
+    }
+    public var rawValue: String {
+        switch self {
+        case .none: return "none"
+        case .noHostnameVerification: return "noHostnameVerification"
+        case .fullVerification: return "fullVerification"
+        }
+    }
+}
+extension CertificateVerification: Codable { }
+
+struct HTTPClientMTLSConfiguration: Hashable, Codable {
     let softwareStatementId: String
     var tlsCertificateVerification: CertificateVerification = .fullVerification
     var tlsRenegotiationSupport: NIORenegotiationSupport = .none
@@ -112,6 +153,47 @@ final class HTTPClientManager {
     
     static var shared = HTTPClientManager()
     
+    let jsonEncoderDateFormatISO8601WithSeconds: JSONEncoder = JSONEncoder()
+    let jsonDecoderDateFormatISO8601WithSeconds: JSONDecoder = JSONDecoder()
+    
+    let jsonEncoderDateFormatISO8601WithMilliSeconds: JSONEncoder = JSONEncoder()
+    let jsonDecoderDateFormatISO8601WithMilliSeconds: JSONDecoder = JSONDecoder()
+    
+    let jsonEncoderDateFormatSecondsSince1970: JSONEncoder = JSONEncoder()
+    let jsonDecoderDateFormatSecondsSince1970: JSONDecoder = JSONDecoder()
+
+    let jsonEncoderDateFormatMilliSecondsSince1970: JSONEncoder = JSONEncoder()
+    let jsonDecoderDateFormatMilliSecondsSince1970: JSONDecoder = JSONDecoder()
+    
+    init() {
+        
+        jsonEncoderDateFormatISO8601WithSeconds.dateEncodingStrategy = .iso8601
+        jsonDecoderDateFormatISO8601WithSeconds.dateDecodingStrategy = .iso8601
+        
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        jsonEncoderDateFormatISO8601WithMilliSeconds.dateEncodingStrategy = .custom({ (date, encoder) in
+            var container = encoder.singleValueContainer()
+            try container.encode(dateFormatter.string(from: date))
+        })
+        jsonDecoderDateFormatISO8601WithMilliSeconds.dateDecodingStrategy = .custom({decoder in
+            let value = try decoder.singleValueContainer()
+            let stringValue = try value.decode(String.self)
+            guard let date = dateFormatter.date(from: stringValue) else {
+                throw "Can't convert from String to Date"
+            }
+            return date
+        })
+        
+        jsonEncoderDateFormatSecondsSince1970.dateEncodingStrategy = .deferredToDate
+        //jsonEncoderDateFormatSecondsSince1970.outputFormatting = .withoutEscapingSlashes
+        jsonDecoderDateFormatSecondsSince1970.dateDecodingStrategy = .secondsSince1970
+
+        jsonEncoderDateFormatMilliSecondsSince1970.dateEncodingStrategy = .deferredToDate
+        jsonDecoderDateFormatMilliSecondsSince1970.dateDecodingStrategy = .millisecondsSince1970
+
+    }
+    
     let clientNoMTLS = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
     
     var clientsMTLS = HttpClientsMTLS()
@@ -136,17 +218,29 @@ final class HTTPClientManager {
                 "Accept": "application/json"
         ])
     }
-
+    
+    func postRequest(url: URL, xFapiFinancialId: String?, authHeader: String?, isFormUrlencoded: Bool = false) -> HTTPClient.Request {
+        let headers = [
+            "Cache-Control": "no-cache",
+            "x-fapi-financial-id": xFapiFinancialId,
+            "Authorization": authHeader,
+            "Content-Type": isFormUrlencoded ? "application/x-www-form-urlencoded" : "application/json",
+            "Accept": "application/json"
+            ]
+            .filter { $1 != nil } // remove Authorization or x-fapi-financial-id if values nil
+            .map { ($0, $1!) } // force unwrap
+        return try! HTTPClient.Request(
+            url: url,
+            method: .POST,
+            headers: HTTPHeaders(headers)
+        )
+    }
+    
     func executeMTLS(
         request: HTTPClient.Request,
-        softwareStatementId: String,
-        httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?,
+        httpClientMTLSConfiguration: HTTPClientMTLSConfiguration,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
     ) -> EventLoopFuture<HTTPClient.Response> {
-        let httpClientMTLSConfiguration = HTTPClientMTLSConfiguration(
-            softwareStatementId: softwareStatementId,
-            overrides: httpClientMTLSConfigurationOverrides
-        )
         return clientsMTLS.getHTTPClientMTLS(
             httpClientMTLSConfiguration: httpClientMTLSConfiguration,
             on: eventLoop

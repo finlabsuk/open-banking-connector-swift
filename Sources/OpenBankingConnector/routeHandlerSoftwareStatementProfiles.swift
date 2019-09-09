@@ -39,7 +39,7 @@ func routeHandlerSoftwareStatementProfiles(
             let softwareStatementProfiles: [SoftwareStatementProfile]
             do {
                 let data = buffer.readData(length: buffer.readableBytes)!
-                softwareStatementProfiles = try JSONDecoder().decode([SoftwareStatementProfile].self, from: data)
+                softwareStatementProfiles = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode([SoftwareStatementProfile].self, from: data)
                 print(softwareStatementProfiles)
             } catch {
                 print(error)
@@ -48,18 +48,26 @@ func routeHandlerSoftwareStatementProfiles(
             }
             
             // Save software statement profiles
-            let currentFuture = context.eventLoop.makeSucceededFuture(())
+            var currentFuture = context.eventLoop.makeSucceededFuture(())
             for softwareStatementProfile in softwareStatementProfiles {
-                currentFuture.flatMap({ softwareStatementProfile.insert() })
+                currentFuture = currentFuture.flatMap({ softwareStatementProfile.insert() })
             }
             
             currentFuture
                 
                 // Send success response
-                .flatMapThrowing { responseCallback(.created, try! JSONEncoder().encode("Success text")) }
+                .flatMapThrowing({
+                    struct ReturnType: Encodable { let message: String }
+                    let returnJson = try! JSONEncoder().encode(ReturnType(message: "Success"))
+                    responseCallback(.created, returnJson)
+                })
                 
                 // Send failure response
-                .whenFailure { error in responseCallback(.internalServerError, try! JSONEncoder().encode("\(error)")) }
+                .whenFailure({ error in
+                    struct ReturnType: Encodable { let error: String }
+                    let returnJson = try! JSONEncoder().encode(ReturnType(error: "\(error)"))
+                    responseCallback(.internalServerError, returnJson)
+                })
             
         }
         

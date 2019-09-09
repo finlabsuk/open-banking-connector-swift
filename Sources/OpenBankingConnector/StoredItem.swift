@@ -38,7 +38,8 @@ struct Mutable<V: Codable>: Codable {
 /// List of conforming types to allow storage setup etc
 let storedItemConformingTypes: [String: StoredItem.Type] = [
     OBClient.typeName:                      OBClient.self,
-    SoftwareStatementProfile.typeName:      SoftwareStatementProfile.self
+    SoftwareStatementProfile.typeName:      SoftwareStatementProfile.self,
+    AccountAccessConsent.typeName:          AccountAccessConsent.self
 ]
 
 /// Data Item that can be persisted in database and synced between devices.
@@ -49,26 +50,29 @@ protocol StoredItem: Codable {
     // ********************************************************************************
 
     /// Unique identity of data object
-    var id: String {get}
+    var id: String { get }
     
     // Association of data object with other data objects ("ownership")
     // Empty strings used for types where association doesn't make sense
     /// "FinTech identity"
-    var softwareStatementProfileId: String {get}
+    var softwareStatementProfileId: String { get }
     /// "Bank (ASPSP) identity"
-    var issuerURL: String {get}
+    var issuerURL: String { get }
     /// "Open Banking client identity"
-    var obClientId: String {get}
+    var obClientId: String { get }
     /// "User identity"
-    var userId: String {get}
-
+    var userId: String { get }
+    
+    /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
+    var authState: String { get }
+    
     /// Data object creation date
-    var created: Date {get}
+    var created: Date { get }
     
     // Has data object been deleted?
     // (Done this way to support "undo" and merging of data objects from different DB - latest
     // value wins.)
-    var isDeleted: Mutable<Bool> {get set}
+    var isDeleted: Mutable<Bool> { get set }
 
     // ********************************************************************************
     // MARK: Stored properties (don't persist to storage)
@@ -130,6 +134,7 @@ extension StoredItem {
             .column("issuerURL", type: .text)
             .column("obClientId", type: .text)
             .column("userId", type: .text)
+            .column("authState", type: .text)
             .column("json", type: .text, .notNull)
             .run()
             .flatMapError({error in
@@ -141,8 +146,8 @@ extension StoredItem {
     func insert() -> EventLoopFuture<Void> {
         print(tableNameTmp)
         return sm.db.insert(into: tableNameTmp)
-            .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "json")
-            .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId),
+            .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "authState", "json")
+            .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId), SQLBind(authState),
                     SQLBind(self.encodeString()))
             .run()
             .flatMapError({error in
@@ -153,7 +158,7 @@ extension StoredItem {
     
     /// Encode JSON (gets around bug that stops direct use in other places)
     func encode() -> Data {
-        return try! sm.jsonEncoder.encode(self)
+        return try! sm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(self)
     }
     
     /// Encode JSON (gets around bug that stops direct use in other places)

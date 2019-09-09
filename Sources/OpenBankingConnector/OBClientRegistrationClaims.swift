@@ -20,10 +20,11 @@ import NIOFoundationCompat
 struct OBClientRegistrationClaims: Claims, Equatable {
 
     let iss: String
+    var aud: String
     let iat: DateExcludedFromEquatable
     let exp: DateExcludedFromEquatable
-    var aud: String
     let jti: StringExcludedFromEquatable
+    
     let client_id: String?
     let redirect_uris: [String]
     var token_endpoint_auth_method: String
@@ -81,11 +82,17 @@ struct OBClientRegistrationClaims: Claims, Equatable {
         softwareStatementProfileId: String,
         softwareStatementId: String,
         issuerURL: String,
-        issuerRegistrationURL: String,
-        httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?,
-        obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides?,
+        xFapiFinancialId: String?,
+        obAccountTransactionBaseURL: String,
+        aspspOverrides: ASPSPOverrides?,
+        openIDConfiguration: OpenIDConfiguration,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
     ) -> EventLoopFuture<OBClient> {
+        
+        let httpClientMTLSConfiguration = HTTPClientMTLSConfiguration(
+            softwareStatementId: softwareStatementId,
+            overrides: aspspOverrides?.httpClientMTLSConfigurationOverrides
+        )
         
         // Generate JWS from claims
         return genJws(
@@ -97,10 +104,10 @@ struct OBClientRegistrationClaims: Claims, Equatable {
             // Post claims
             .flatMap({ obClientRegistrationJws -> EventLoopFuture<HTTPClient.Response> in
                 var request = hcm.postRequestRegistration(
-                    url: URL(string: issuerRegistrationURL)!
+                    url: URL(string: openIDConfiguration.registration_endpoint)!
                 )
                 request.body = .string(obClientRegistrationJws)
-                return hcm.executeMTLS(request: request, softwareStatementId: softwareStatementId, httpClientMTLSConfigurationOverrides: httpClientMTLSConfigurationOverrides)
+                return hcm.executeMTLS(request: request, httpClientMTLSConfiguration: httpClientMTLSConfiguration)
             })
             
             // Decode response
@@ -111,7 +118,7 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                     var responseObject = try decoder.decode(
                         OBClientRegistrationResponse.self,
                         from: data)
-                    responseObject.applyOverrides(overrides: obClientRegistrationResponseOverrides)
+                    responseObject.applyOverrides(overrides: aspspOverrides?.obClientRegistrationResponseOverrides)
                     print(response.status.code)
                     print(responseObject)
                     return responseObject
@@ -158,17 +165,22 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                 // precondition(response.tls_client_auth_subject_dn == self.tls_client_auth_subject_dn)
                 
                 // Convert response to OBClient
-                let obClientASPSPData = OBClientASPSPData(
+                let registrationData = OBClientRegistrationData(
                     client_id: response.client_id,
                     client_secret: response.client_secret,
                     client_id_issued_at: response.client_id_issued_at,
                     client_secret_expires_at: response.client_secret_expires_at
                 )
+                let obAccountTransactionAPISettings = OBAccountTransactionAPISettings(obBaseURL: obAccountTransactionBaseURL, overrides: aspspOverrides?.obAccountTransactionAPISettingsOverrides)
                 return OBClient(
                     softwareStatementProfileId: softwareStatementProfileId,
                     issuerURL: issuerURL,
+                    xFapiFinancialId: xFapiFinancialId,
+                    openIDConfiguration: openIDConfiguration,
+                    httpClientMTLSConfiguration: httpClientMTLSConfiguration,
                     registrationClaims: self,
-                    aspspData: obClientASPSPData
+                    registrationData: registrationData,
+                    obAccountTransactionAPISettings: obAccountTransactionAPISettings
                 )
             })
             
@@ -190,13 +202,13 @@ extension OBClientRegistrationClaims {
     ) {
         self.init(
             iss: softwareStatementProfile.softwareStatementId,
+            aud: issuerURL,
             iat: DateExcludedFromEquatable(
                 date: Date() // TODO: change format to avoid fractional value?
             ),
             exp: DateExcludedFromEquatable(
                 date: Date(timeIntervalSinceNow: 3600) // TODO: change format to avoid fractional value?
             ),
-            aud: issuerURL,
             jti: StringExcludedFromEquatable(
                 string: UUID().uuidString
             ),

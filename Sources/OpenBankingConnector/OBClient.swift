@@ -12,9 +12,29 @@
 
 import Foundation
 import NIO
+import AsyncHTTPClient
 import SQLKit
 
-struct OBClientASPSPData: Codable {
+func escape(_ value: String) -> String? {
+    return value.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
+}
+func encode(key: String, value: String) -> String? {
+    return escape("\(key)=\(value)")
+}
+func tmpEncode(parameters: [String: String]) -> String {
+    return parameters.compactMap(encode).joined(separator: "&")
+}
+
+func tmpDecode(input: String) -> [String: String] {
+    let components = input.components(separatedBy: "&")
+    return components.reduce(into: [String: String]()) { result, next in
+        let tmpComponents = next.removingPercentEncoding!
+        let newComponents = tmpComponents.components(separatedBy: "=")
+        result[newComponents[0]] = newComponents[1]
+    }
+}
+
+struct OBClientRegistrationData: Codable {
     let client_id: String
     let client_secret: String?
     let client_id_issued_at: Date?
@@ -45,6 +65,9 @@ struct OBClient: StoredItem {
     }
     /// "User identity"
     var userId: String = ""
+
+    /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
+    var authState: String = ""
     
     // Timestamp for object creation as best we can determine
     let created: Date = Date()
@@ -55,22 +78,44 @@ struct OBClient: StoredItem {
     
     // ********************************************************************************
     
+    /// FAPI financial ID
+    let xFapiFinancialId: String?
+
+    /// Data from Open ID config
+    let openIDConfiguration: OpenIDConfiguration
+
+    /// Claims used to create OB client
+    let registrationClaims: OBClientRegistrationClaims
+    
+    /// OB client data supplied by ASPSP at time of creation
+    let registrationData: OBClientRegistrationData
+    
+    /// MTLS configuration
+    let httpClientMTLSConfiguration: HTTPClientMTLSConfiguration
+    
+    /// Settings to use for interactions with OB Account and Transaction API
+    let obAccountTransactionAPISettings: OBAccountTransactionAPISettings
+    
     init( // TODO: Remove after Swift 5.1
         softwareStatementProfileId: String,
         issuerURL: String,
+        xFapiFinancialId: String?,
+        openIDConfiguration: OpenIDConfiguration,
+        httpClientMTLSConfiguration: HTTPClientMTLSConfiguration,
         registrationClaims: OBClientRegistrationClaims,
-        aspspData: OBClientASPSPData
+        registrationData: OBClientRegistrationData,
+        obAccountTransactionAPISettings: OBAccountTransactionAPISettings
     ) {
         self.softwareStatementProfileId = softwareStatementProfileId
         self.issuerURL = issuerURL
+        self.xFapiFinancialId = xFapiFinancialId
+        self.openIDConfiguration = openIDConfiguration
+        self.httpClientMTLSConfiguration = httpClientMTLSConfiguration
         self.registrationClaims = registrationClaims
-        self.aspspData = aspspData
+        self.registrationData = registrationData
+        self.obAccountTransactionAPISettings = obAccountTransactionAPISettings
     }
-    
-    let registrationClaims: OBClientRegistrationClaims
-    
-    let aspspData: OBClientASPSPData
-    
+
     static func load(
         id: String?,
         softwareStatementProfileId: String?,
@@ -97,7 +142,7 @@ struct OBClient: StoredItem {
                 var resultArray = [OBClient]()
                 for row in rowArray {
                     let dataString: String = try row.decode(column: "json", as: String.self)
-                    let obClient: OBClient = try sm.jsonDecoder.decode(
+                    let obClient: OBClient = try sm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
                         OBClient.self,
                         from: Data(dataString.utf8)
                     )
@@ -111,5 +156,67 @@ struct OBClient: StoredItem {
             })
         
     }
+    
+    func httpPostClientCredentialsGrant(
+        scope: String,
+        on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
+    ) -> EventLoopFuture<OBTokenEndpointResponse> {
+        
+        return eventLoop.makeSucceededFuture(())
+            
+            // Post claims
+            .flatMap({ () -> EventLoopFuture<HTTPClient.Response> in
+                var authHeader: String? = nil // none by default
+                var params = ["grant_type": "client_credentials",
+                              "scope": scope]
+                if self.registrationClaims.token_endpoint_auth_method == "tls_client_auth" {
+                    params["client_id"] = self.registrationData.client_id
+                } else if self.registrationClaims.token_endpoint_auth_method == "client_secret_basic" {
+                    let tmpString: String = self.registrationData.client_id + ":" + self.registrationData.client_secret!
+                    authHeader = "Basic " + Data(tmpString.utf8).base64EncodedString()
+                } else {
+                    fatalError() // Don't support other token endpoint auth options atm
+                }
+                var request = hcm.postRequest(
+                    url: URL(string: self.openIDConfiguration.token_endpoint)!,
+                    xFapiFinancialId: self.xFapiFinancialId,
+                    authHeader: authHeader,
+                    isFormUrlencoded: true
+                )
+                request.body = .string(tmpEncode(parameters: params))
+                return hcm.executeMTLS(
+                    request: request,
+                    httpClientMTLSConfiguration: self.httpClientMTLSConfiguration
+                )
+            })
+            
+            // Decode response
+            .flatMapThrowing({ response -> OBTokenEndpointResponse in
+                if response.status == .ok,
+                    var body = response.body {
+                    let data = body.readData(length: body.readableBytes)!
+                    let responseObject = try decoder.decode(
+                        OBTokenEndpointResponse.self,
+                        from: data)
+                    print(response.status.code)
+                    print(responseObject)
+                    return responseObject
+                } else {
+                    if var bodyTmp = response.body,
+                        let bodyString = bodyTmp.readString(length: bodyTmp.readableBytes) {
+                        print(bodyString)
+                    }
+                    throw "Bad response..."
+                }
+            })
+            
+            .flatMapError({error in
+                print(error)
+                fatalError()
+            })
+
+    }
+    
+    
     
 }
