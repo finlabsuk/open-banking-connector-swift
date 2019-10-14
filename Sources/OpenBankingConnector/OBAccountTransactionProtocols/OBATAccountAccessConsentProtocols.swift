@@ -13,7 +13,7 @@
 import Foundation
 import NIO
 import AsyncHTTPClient
-import OBATTypes
+import AccountTransactionTypes
 
 // MARK:- Account access consent protocols
 

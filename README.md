@@ -1,22 +1,25 @@
-# Open Banking Connector
+![Alt text](./docs/OBC_Banner.png)
+# Overview
 
-_[NB currently dropping code for 0.0.1 release expected very soon (sorry for delay). That release will be acompanied by full instructions here on how to use....]_
+Open Banking Connector is an interface layer that handles connections to UK Open Banking APIs. It is desiged for use as:
+* an interface layer for consumption of Open Banking APIs (e.g. by FinTechs who do not want to pass data through an agent)
+* an interface layer for testing functionality and live status of Open Banking APIs (e.g. by banks or FinTechs in automated regression tests) (NB: Companion product [Open Banking Test Kit](https://github.com/finlabsuk/open-banking-test-kit), available to sponsors, demonstrates such API testing for a growing list of UK banks.)
+* an entire backend for an Open Banking client app (e.g. mobile phone or web app)
+* reference software which all stakeholders in UK Open Banking can benefit from in the interests of promoting and improving Open Banking solutions for the benefit of consumers
 
-Open Banking Connector is Open Source software that handles connections to UK Open Banking APIs. It presents to the user a simplified version of the UK Open Banking Read/Write Data APIs and can handle various complexities on their behalf. Specifically it can handle:
-* banks' support of differing versions of the UK Open Banking read/write data API standard (versions 3.0, 3.1, 3.1.1 currently supported)
-* banks' different interpretation/implementation choices when implementing UK Open Banking via a flexible system of configurable "overrides"
-* banks' differing formats and conventions for user data via overrides
-* management and storage of Open Banking client data (sensitive information is handled as per user security and storage policies and is not API-accessible)
-* management and storage of user consents including tokens (sensitive information is handled as per user security and storage policies and is not API-accessible)
+The software allows:
+* for each Software Statement, creation of *SoftwareStatementProfile* objects which combine a Software Statement with specified preferences 
+* for each ASPSP, creation of *OBClientProfile* objects which combine a mapping to an underlying ASPSP OAuth2 client with specified ASPSP communication preferences
+* for each user, creation of account access and payment consent objects which include a mapping to an underlying ASPSP consent and enable user authorisation (URL generation and redirect handling)
 
-The software is written using Apple's new non-blocking, multi-threaded, high-performance [SwiftNIO](https://github.com/apple/swift-nio) network application framework and uses a limited set of carefully selected Open Source dependencies (see [here](https://github.com/finlabsuk/open-banking-connector/blob/master/Package.swift)). It is designed for use on Linux and with Docker as well as standalone on a Mac (or PC?) for test purposes.
+The functional (AISP and PISP) API provided is a simplified version of the UK Open Banking read/write data API standard which absorbs/minimises differences between different standard versions. Request types are version-independent (although some fields may have different valid options) and the significant data of response types is made version independent via protocol methods (the full ASPSP resource data is passed on by default so nothing is lost).
 
-The objectives of the software are:
-* to support FinTechs looking to access Open Banking APIs but not wishing to pass data through an agent and willing to share the burden of solving problems related to multi-bank API access
-* to support banks wishing to test their own and competitor Open Banking APIs without needing to build their own app or platform
-* to support banks willing to contribute to and support a public reference implementation for accessing their APIs to which they can refer FinTechs and others (could really help with service desk calls...)
-* to provide reference software which all stakeholders in UK Open Banking can use and contribute to in the interests of promoting and improving Open Banking solutions for the benefit of consumers and the public at large
+ASPSP interpretations and implementations of Open Banking APIs differ and this is handled by *OBClientProfile* objects' support of options and overrides for OAuth2 client creation and API communication. Sponsors, please note that [Open Banking Test Kit](https://github.com/finlabsuk/open-banking-test-kit) contains example code for integrations with a growing list of UK banks.
 
-Please get in touch if you wish to contribute towards this effort!
+Sensitive data (e.g. user tokens) is not API-accessible. Such data is stored as plain-text for debugging purposes when the software is run in development mode. We are currently working on storage options for use in production mode.
 
-(Much) more to come....
+The software is written using Apple's new non-blocking, multi-threaded, high-performance [SwiftNIO](https://github.com/apple/swift-nio) network application framework and uses a limited set of carefully selected Open Source dependencies (see [here](https://github.com/finlabsuk/open-banking-connector/blob/master/Package.swift)). It is designed for use on Linux and with Docker as well as standalone on a Mac for test purposes.
+
+To use this software, you must at least be a member of the UK Open Banking Directory sandbox and able to generate software statements.
+
+We will add two additional documents here covering (a) installation and (b) the API.

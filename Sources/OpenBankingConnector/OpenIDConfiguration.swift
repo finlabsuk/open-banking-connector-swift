@@ -27,7 +27,7 @@ struct OpenIDConfiguration: Codable {
     let issuer: String
     let response_types_supported: [String]
     let scopes_supported: [String]
-    let response_modes_supported: [String]
+    let response_modes_supported: [String]?
     let token_endpoint: String
     let authorization_endpoint: String
     var registration_endpoint: String

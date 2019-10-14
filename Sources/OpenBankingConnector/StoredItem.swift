@@ -13,27 +13,7 @@
 import Foundation
 import NIO
 import SQLKit
-
-//@propertyWrapper
-struct Mutable<V: Codable>: Codable {
-
-    var value: V
-    var modified: Date
-    
-    init(wrappedValue: V) {
-        value = wrappedValue
-        modified = Date()
-    }
-    
-    var wrappedValue: V {
-        get { return value }
-        set {
-            value = newValue
-            modified = Date()
-        }
-    }
-    
-}
+import BaseServices
 
 /// List of conforming types to allow storage setup etc
 let storedItemConformingTypes: [String: StoredItem.Type] = [
@@ -41,52 +21,6 @@ let storedItemConformingTypes: [String: StoredItem.Type] = [
     SoftwareStatementProfile.typeName:              SoftwareStatementProfile.self,
     AccountAccessConsent.typeName:                  AccountAccessConsent.self
 ]
-
-/// Data Item that can be persisted in database and synced between devices.
-protocol StoredItem: Codable {
-    
-    // ********************************************************************************
-    // MARK: Stored properties (persist to storage)
-    // ********************************************************************************
-
-    /// Unique identity of data object
-    var id: String { get }
-    
-    // Association of data object with other data objects ("ownership")
-    // Empty strings used for types where association doesn't make sense
-    /// "FinTech identity"
-    var softwareStatementProfileId: String { get }
-    /// "Bank (ASPSP) identity"
-    var issuerURL: String { get }
-    /// "Open Banking client identity"
-    var obClientId: String { get }
-    /// "User identity"
-    var userId: String { get }
-    
-    /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
-    var authState: String { get }
-    
-    /// Data object creation date
-    var created: Date { get }
-    
-    // Has data object been deleted?
-    // (Done this way to support "undo" and merging of data objects from different DB - latest
-    // value wins.)
-    var isDeleted: Mutable<Bool> { get set }
-
-    // ********************************************************************************
-    // MARK: Stored properties (don't persist to storage)
-    // ********************************************************************************
-
-    // ********************************************************************************
-    // MARK: Required methods
-    // ********************************************************************************
-
-    // ********************************************************************************
-    // MARK: Optional methods
-    // ********************************************************************************
-
-}
 
 extension StoredItem {
     

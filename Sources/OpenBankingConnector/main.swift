@@ -30,7 +30,7 @@ import NIO
 import NIOHTTP1
 import Foundation
 import Logging
-import LocalTypes
+import AccountTransactionTypes
 
 extension String {
     func chopPrefix(_ prefix: String) -> String? {
@@ -62,6 +62,15 @@ extension String {
         } else {
             return nil
         }
+    }
+}
+
+private func getSingleValuedHeader(fieldName: String, headers: HTTPHeaders) -> String? {
+    let valueArray = headers[canonicalForm: fieldName]
+    if valueArray.count == 1 {
+        return String(valueArray[0])
+    } else {
+        return nil
     }
 }
 
@@ -282,7 +291,7 @@ private final class HTTPHandler: ChannelInboundHandler {
             return { context, req in
                 self.handleJustWrite(context: context,
                                      request: req, string: self.defaultResponse,
-                                     delay: TimeAmount.Value(howLong).map { .milliseconds($0) } ?? .seconds(0))
+                                     delay: Int64(howLong).map { .milliseconds($0) } ?? .seconds(0))
             }
         }
 
@@ -497,24 +506,29 @@ private final class HTTPHandler: ChannelInboundHandler {
                         buffer: &self.buffer
                         )}
                 }
-            } else if
-                // GET /accounts/{AccountId}/statements/{StatementId}/transactions
-                // GET /accounts/{AccountId}/transactions
-                // GET /transactions
-                let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
-                    pattern: #"^(?:\/accounts\/([\w-]+)(?:\/statements\/([\w-]+))?)?\/transactions$"#
-                    )),
-                let accountAccessConsentID = getSingleValuedHeader(fieldName: "x-obc-account-access-consent-id", headers: request.headers),
-                httpMethod == .GET
-            {
-                self.handler = { endpointHandlerGetAccountTransactionResource(
-                    context: $0,
-                    request: $1,
-                    type: Transaction.self,
-                    regexMatch: regexMatch,
-                    accountAccessConsentID: accountAccessConsentID,
-                    responseCallback: responseCallback
-                    )}
+            } else {
+                // Loop through OBAT resources
+                for obatResourceType in OBATResourceType.allCases {
+                    
+                    // GET OBAT resource
+                    if
+                        let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
+                            pattern: obatResourceType.urlRegexGetOBATResource()
+                            )),
+                        let accountAccessConsentID = getSingleValuedHeader(fieldName: "x-obc-account-access-consent-id", headers: request.headers),
+                        httpMethod == .GET
+                    {
+                        self.handler = { endpointHandlerGetOBATResource(
+                            context: $0,
+                            request: $1,
+                            obatResourceType: obatResourceType,
+                            regexMatch: regexMatch,
+                            accountAccessConsentID: accountAccessConsentID,
+                            responseCallback: responseCallback
+                            )}
+                        break
+                    }
+                }
             }
             
             if let handler = self.handler {
@@ -625,11 +639,16 @@ LoggingSystem.bootstrap { label in
     return handler
 }
 
-// Create event loop group
+// Create event loop group and thread pool
 let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+let threadPool = NIOThreadPool(numberOfThreads: 6)
+threadPool.start()
 
 // Create storage manager and database tables
-let sm = StorageManager(file: projectRootPath + "/db.sqlite3")
+let sm = StorageManager(
+    file: projectRootPath + "/db.sqlite3",
+    threadPool: threadPool
+)
 try! sm.createTables(
     dropTables: false,
     on: eventLoopGroup.next()
@@ -641,8 +660,6 @@ let hcm = HTTPClientManager(
 )
 
 // Bootstrap HTTP server
-let threadPool = NIOThreadPool(numberOfThreads: 6)
-threadPool.start()
 let fileIO = NonBlockingFileIO(threadPool: threadPool)
 let bootstrap = ServerBootstrap(group: eventLoopGroup)
     // Specify backlog and enable SO_REUSEADDR for the server itself

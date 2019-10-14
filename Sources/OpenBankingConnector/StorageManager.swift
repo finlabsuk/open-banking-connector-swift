@@ -17,13 +17,13 @@ import SQLiteKit
 final class StorageManager {
     
     var db = ThreadSpecificVariable<ConnectionPool<SQLiteConnectionSource>>()
-    var dbThreadPool = ThreadSpecificVariable<NIOThreadPool>()
     
     let jsonEncoderDateFormatISO8601WithMilliSeconds: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatISO8601WithMilliSeconds: JSONDecoder = JSONDecoder()
 
     init(
-        file: String
+        file: String,
+        threadPool: NIOThreadPool
     ) {
         
         let dateFormatter = ISO8601DateFormatter()
@@ -43,15 +43,11 @@ final class StorageManager {
         
         eventLoopGroup.makeIterator().forEach { eventLoop in
             try! eventLoop.submit({
-                let threadPool = NIOThreadPool.init(numberOfThreads: 2)
-                self.dbThreadPool.currentValue = threadPool
-//                self.dbThreadPool.currentValue = NIOThreadPool.init(numberOfThreads: 2)
                 let source = SQLiteConnectionSource(
                     configuration: .init(storage: .connection(.file(path: file))), // creates file if missing?
-                    threadPool: threadPool,
-                    on: eventLoop
+                    threadPool: threadPool
                 )
-                let pool = ConnectionPool(config: .init(maxConnections: 8), source: source)
+                let pool = ConnectionPool(configuration: .init(maxConnections: 8), source: source, on: eventLoop)
                 self.db.currentValue = pool
             }).wait()
         }
@@ -61,10 +57,8 @@ final class StorageManager {
     deinit {
         eventLoopGroup.makeIterator().forEach { eventLoop in
             try! eventLoop.makeSucceededFuture(())
-                .flatMap({_ in
-                    self.db.currentValue!.close()
-                }).flatMapThrowing({_ in
-                    try! self.dbThreadPool.currentValue!.syncShutdownGracefully()
+                .flatMapThrowing({_ in
+                    self.db.currentValue!.shutdown()
                 }).wait()
         }
     }

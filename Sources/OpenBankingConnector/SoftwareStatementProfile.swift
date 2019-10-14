@@ -13,6 +13,7 @@
 import Foundation
 import NIO
 import SQLKit
+import BaseServices
 
 struct SoftwareStatementProfile: StoredItem {
     

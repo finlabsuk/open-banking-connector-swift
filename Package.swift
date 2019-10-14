@@ -16,63 +16,94 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.8.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0-alpha.4"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.9.0"),
+        //.package(path: "../swift-nio"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0"),
         .package(url: "https://github.com/IBM-Swift/Swift-JWT.git", from: "3.5.0"),
         .package(url: "https://github.com/vapor/sqlite-kit.git", from: "4.0.0-alpha.1.1"),
+        //.package(path: "../sqlite-kit"),
         .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-alpha.1.3"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.1.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
+        
+        // Base services
         .target(
             name: "BaseServices",
             dependencies: [
         ]),
+        
+        // UK Open Banking Account and Transaction Types
         .target(
-            name: "OBATProtocols",
+            name: "AccountTransactionTypeRequirements",
+            dependencies: [
+                "BaseServices"
+        ]),
+        .target(
+            name: "AccountTransactionApiV3p0Types",
+            dependencies: [
+                "AccountTransactionTypeRequirements"
+        ]),
+        .target(
+            name: "AccountTransactionApiV3p1p1Types",
+            dependencies: [
+                "AccountTransactionTypeRequirements"
+        ]),
+        .target(
+            name: "AccountTransactionApiV3p1p2Types",
+            dependencies: [
+                "AccountTransactionTypeRequirements"
+        ]),
+        .target(
+            name: "AccountTransactionLocalTypes",
             dependencies: [
                 "BaseServices",
-                "NIO",
-                "AsyncHTTPClient",
+                "AccountTransactionTypeRequirements"
         ]),
         .target(
-            name: "OBReadWriteV3p0",
+            name: "AccountTransactionTypes",
             dependencies: [
-                "OBATProtocols"
+                "AccountTransactionTypeRequirements",
+                "AccountTransactionApiV3p0Types",
+                "AccountTransactionApiV3p1p1Types",
+                "AccountTransactionApiV3p1p2Types",
+                "AccountTransactionLocalTypes"
         ]),
+        
+        // UK Open Banking Payment Initiation Types
         .target(
-            name: "OBReadWriteV3p1p1",
+            name: "PaymentInitiationTypeRequirements",
             dependencies: [
-                "OBATProtocols"
+                "BaseServices"
         ]),
         .target(
-            name: "OBReadWriteV3p1p2",
+            name: "PaymentInitiationApiV3p1p1Types",
             dependencies: [
-                "OBATProtocols"
+                "PaymentInitiationTypeRequirements"
         ]),
         .target(
-            name: "OBATTypes",
+            name: "PaymentInitiationApiV3p1p2Types",
             dependencies: [
-                "OBATProtocols",
-                "OBReadWriteV3p0",
-                "OBReadWriteV3p1p1",
-                "OBReadWriteV3p1p2"
+                "PaymentInitiationTypeRequirements"
         ]),
         .target(
-            name: "LocalProtocols",
+            name: "PaymentInitiationLocalTypes",
             dependencies: [
                 "BaseServices",
-                "NIO",
-                "AsyncHTTPClient",
-                "OBATProtocols"
+                "PaymentInitiationTypeRequirements"
         ]),
         .target(
-            name: "LocalTypes",
+            name: "PaymentInitiationTypes",
             dependencies: [
-                "LocalProtocols"
+                "PaymentInitiationTypeRequirements",
+                "PaymentInitiationApiV3p1p1Types",
+                "PaymentInitiationApiV3p1p2Types",
+                "PaymentInitiationLocalTypes"
         ]),
+
+        // Main OBC module
         .target(
             name: "OpenBankingConnector",
             dependencies: [
@@ -84,9 +115,13 @@ let package = Package(
                 "SQLiteKit",
                 "SQLKit",
                 "Logging",
-                "OBATTypes",
-                "LocalTypes"
+                "AccountTransactionTypeRequirements",
+                "AccountTransactionTypes",
+                "PaymentInitiationTypeRequirements",
+                "PaymentInitiationTypes"
         ]),
+        
+        // Test module
         .testTarget(
             name: "OpenBankingConnectorTests",
             dependencies: ["OpenBankingConnector"]),

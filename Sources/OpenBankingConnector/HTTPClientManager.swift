@@ -178,9 +178,6 @@ final class HTTPClientManager {
     let jsonEncoderDateFormatSecondsSince1970: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatSecondsSince1970: JSONDecoder = JSONDecoder()
 
-    let jsonEncoderDateFormatMilliSecondsSince1970: JSONEncoder = JSONEncoder()
-    let jsonDecoderDateFormatMilliSecondsSince1970: JSONDecoder = JSONDecoder()
-    
     let clientNoMTLS = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
     
     let clientsMTLS: HttpClientsMTLS
@@ -206,13 +203,12 @@ final class HTTPClientManager {
             return date
         })
         
-        jsonEncoderDateFormatSecondsSince1970.dateEncodingStrategy = .deferredToDate
-        //jsonEncoderDateFormatSecondsSince1970.outputFormatting = .withoutEscapingSlashes
+        jsonEncoderDateFormatSecondsSince1970.dateEncodingStrategy = .custom({ (date, encoder) in
+            var container = encoder.singleValueContainer()
+            try container.encode(Int(date.timeIntervalSince1970)) // rounds to integers unlike .secondsSince1970
+        })
         jsonDecoderDateFormatSecondsSince1970.dateDecodingStrategy = .secondsSince1970
 
-        jsonEncoderDateFormatMilliSecondsSince1970.dateEncodingStrategy = .deferredToDate
-        jsonDecoderDateFormatMilliSecondsSince1970.dateDecodingStrategy = .millisecondsSince1970
-        
         clientsMTLS = HttpClientsMTLS(httpClientEventLoop: httpClientEventLoop)
     }
 

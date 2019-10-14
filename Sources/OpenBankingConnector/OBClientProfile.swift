@@ -14,6 +14,7 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 import SQLKit
+import BaseServices
 
 func escape(_ value: String) -> String? {
     return value.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)

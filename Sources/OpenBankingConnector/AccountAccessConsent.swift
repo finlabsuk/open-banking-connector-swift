@@ -14,6 +14,7 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 import SQLKit
+import BaseServices
 
 struct AccountAccessConsent: StoredItem {
     

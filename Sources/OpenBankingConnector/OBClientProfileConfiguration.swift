@@ -10,7 +10,7 @@
 //
 // ********************************************************************************
 
-import OBATTypes
+import AccountTransactionTypes
 
 struct OBClientProfileConfiguration: Codable {
     

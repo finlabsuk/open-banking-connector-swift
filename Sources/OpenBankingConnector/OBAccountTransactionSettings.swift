@@ -10,7 +10,7 @@
 //
 // ********************************************************************************
 
-import OBATTypes
+import AccountTransactionTypes
 
 struct OBAccountTransactionAPISettingsOverrides: Codable {
     var accountAccessConsentPermissions: [OBAccountTransactionAccountAccessConsentPermissions]?

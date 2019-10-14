@@ -10,7 +10,7 @@
 //
 // ********************************************************************************
 
-import OBReadWriteV3p1p1
+import AccountTransactionApiV3p1p1Types
 
 typealias OBReadAccountV3p1p1Alias = OBReadAccount3
 typealias OBReadAccountDataV3p1p1Alias = OBReadAccount3Data
@@ -67,10 +67,10 @@ typealias OBExternalPartyTypeCodeV3p1p1Alias = OBExternalPartyType1Code
 
 // Account conformances
 
-extension OBReadAccountV3p1p1Alias: OBAIReadResourceProtocol { typealias OBAIReadResourceDataType = OBReadAccountDataV3p1p1Alias }
-extension OBReadAccountDataV3p1p1Alias: OBAIReadAccountDataProtocol { typealias OBAIResourceType = OBAccountV3p1p1Alias }
-
-extension OBAccountV3p1p1Alias: OBAIAccountProtocol { }
+//extension OBReadAccountV3p1p1Alias: OBAIReadResourceProtocol { typealias OBAIReadResourceDataType = OBReadAccountDataV3p1p1Alias }
+//extension OBReadAccountDataV3p1p1Alias: OBAIReadAccountDataProtocol { typealias OBAIResourceType = OBAccountV3p1p1Alias }
+//
+//extension OBAccountV3p1p1Alias: OBAIAccountProtocol { }
 
 // Transaction conformances
 
@@ -200,7 +200,7 @@ extension OBReadConsentResponseDataAlias: OBAIReadConsentResponseDataProtocol { 
 
 func returnOBAIV3p1p1ReadResourceType(typeName: OBAIReadResourceTypeName) -> OBItem.Type {
     switch typeName {
-    case .OBAIReadAccount: return OBReadAccountV3p1p1Alias.self
+    //case .OBAIReadAccount: return OBReadAccountV3p1p1Alias.self
     //case .OBAIReadTransaction: return OBReadTransactionAlias.self
     case .OBAIReadDirectDebit: return OBReadDirectDebitV3p1p1Alias.self
     case .OBAIReadBalance: return OBReadBalanceV3p1p1Alias.self
@@ -218,7 +218,7 @@ func returnOBAIV3p1p1ReadResourceType(typeName: OBAIReadResourceTypeName) -> OBI
 
 func returnOBAIV3p1p1ResourceType(typeName: OBAIReadResourceTypeName) -> OBAIResourceProtocol0.Type {
     switch typeName {
-    case .OBAIReadAccount: return OBAccountV3p1p1Alias.self
+    //case .OBAIReadAccount: return OBAccountV3p1p1Alias.self
     //case .OBAIReadTransaction: return OBTransactionAlias.self
     case .OBAIReadDirectDebit: return OBDirectDebitV3p1p1Alias.self
     case .OBAIReadBalance: return OBBalanceV3p1p1Alias.self

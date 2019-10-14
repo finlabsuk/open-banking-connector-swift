@@ -15,15 +15,19 @@ import NIO
 import SwiftJWT
 import AsyncHTTPClient
 import NIOFoundationCompat
-import OBATTypes
+import AccountTransactionTypes
 
 struct OBClientRegistrationClaimsOverrides: Codable {
+    var iss: String?
     var aud: String?
     var token_endpoint_auth_method: String?
     var grant_types: [String]?
     var scope__useStringArray: Bool?
     var token_endpoint_auth_signing_alg: Optional<String?>
     mutating func update(with newOverrides: OBClientRegistrationClaimsOverrides) {
+        if let newValue = newOverrides.iss {
+            iss = newValue
+        }
         if let newValue = newOverrides.aud {
             aud = newValue
         }
@@ -45,7 +49,7 @@ struct OBClientRegistrationClaimsOverrides: Codable {
 // See: https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1078034771/Dynamic+Client+Registration+-+v3.2
 struct OBClientRegistrationClaims: Claims, Equatable {
 
-    let iss: String
+    var iss: String
     var aud: String
     let iat: DateExcludedFromEquatable
     let exp: DateExcludedFromEquatable
@@ -68,6 +72,9 @@ struct OBClientRegistrationClaims: Claims, Equatable {
     
     mutating func applyOverrides(overrides: OBClientRegistrationClaimsOverrides?) {
         if let overrides = overrides {
+            if let newValue = overrides.iss {
+                iss = newValue
+            }
             if let newValue = overrides.aud {
                 aud = newValue
             }
@@ -88,6 +95,11 @@ struct OBClientRegistrationClaims: Claims, Equatable {
         }
     }
     
+    func encode() throws -> String {
+        let data = try hcm.jsonEncoderDateFormatSecondsSince1970.encode(self)
+        return JWTEncoder.base64urlEncodedString(data: data)
+    }
+
     static func initAsync(
         issuerURL: String,
         softwareStatementId: String,
@@ -186,7 +198,7 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                 precondition(
                     response.request_object_signing_alg.asString() == self.request_object_signing_alg
                 )
-               precondition(response.token_endpoint_auth_signing_alg?.asString() ==
+                precondition(response.token_endpoint_auth_signing_alg?.asString() ==
                     self.token_endpoint_auth_signing_alg
                 )
                 // Currently not checking these:
@@ -237,10 +249,10 @@ extension OBClientRegistrationClaims {
             iss: softwareStatementProfile.softwareStatementId,
             aud: issuerURL,
             iat: DateExcludedFromEquatable(
-                date: Date() // TODO: change format to avoid fractional value?
+                date: Date()
             ),
             exp: DateExcludedFromEquatable(
-                date: Date(timeIntervalSinceNow: 3600) // TODO: change format to avoid fractional value?
+                date: Date(timeIntervalSinceNow: 3600)
             ),
             jti: StringExcludedFromEquatable(
                 string: UUID().uuidString

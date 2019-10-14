@@ -13,7 +13,7 @@
 import Foundation
 import NIO
 import AsyncHTTPClient
-import OBATTypes
+import AccountTransactionTypes
 
 // HOWTO: To test with different OB spec version
 //
@@ -425,7 +425,7 @@ func obATReadConsentType(apiVersion: OBAccountTransactionAPIVersion) -> OBATRead
 }
 
 public enum OBAIReadResourceTypeName: String {
-    case OBAIReadAccount
+    //case OBAIReadAccount
     //case OBAIReadTransaction
     case OBAIReadDirectDebit
     case OBAIReadBalance
