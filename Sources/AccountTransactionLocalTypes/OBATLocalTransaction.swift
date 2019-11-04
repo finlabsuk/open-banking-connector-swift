@@ -51,7 +51,7 @@ public struct OBATLocalTransaction<OBATApiResourceType: OBATApiTransactionProtoc
     public let userId: String
     
     /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
-    public let authState: String = ""
+    public let state: String = ""
     
     // Timestamp for object creation as best we can determine
     public let created: Date = Date()

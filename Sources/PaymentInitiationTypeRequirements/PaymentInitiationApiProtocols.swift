@@ -11,15 +11,10 @@
 // ********************************************************************************
 
 import Foundation
-import BaseServices
 
-// MARK:- Base protocols.
+// MARK:- Global protocols
 
-public protocol PaymentInitiationWriteResourceProtocol: Codable {
-    associatedtype PaymentInitiationWriteResourceDataType
-    associatedtype OBRiskApi
-    init(
-        data: PaymentInitiationWriteResourceDataType,
-        risk: OBRiskApi
-    )
+public protocol PaymentInitiationRequestObjectApiTypesProtocol {
+    associatedtype OBWriteDomesticConsentApiType: OBWriteDomesticConsentApiProtocol
+    associatedtype OBWriteDomesticApiType: OBWriteDomesticApiProtocol
 }

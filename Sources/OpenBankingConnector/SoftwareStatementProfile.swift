@@ -45,7 +45,7 @@ struct SoftwareStatementProfile: StoredItem {
     let userId: String = ""
     
     /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
-    var authState: String = ""
+    var state: String = ""
     
     // Timestamp for object creation as best we can determine
     var created: Date = Date()

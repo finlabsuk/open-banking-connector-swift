@@ -12,9 +12,9 @@ import Foundation
 public struct OBReadConsentResponse1: Codable {
 
     public var data: OBReadConsentResponse1Data
-    public var risk: OBRisk2
-    public var links: Links
-    public var meta: Meta
+    public var risk: OBRisk2? // Modified to be optional
+    public var links: Links? // Modified to be optional
+    public var meta: Meta? // Modified to be optional
 
     public init(data: OBReadConsentResponse1Data, risk: OBRisk2, links: Links, meta: Meta) {
         self.data = data

@@ -22,7 +22,7 @@ import AccountTransactionTypeRequirements
 func endpointHandlerGetOBATResource(
     context: ChannelHandlerContext,
     request: HTTPServerRequestPart,
-    obatResourceType: OBATResourceType,
+    obatResourceType: AccountTransactionResourceVariety,
     regexMatch: [String],
     accountAccessConsentID: String,
     responseCallback: @escaping (HTTPResponseStatus, Data) -> Void
@@ -32,14 +32,14 @@ func endpointHandlerGetOBATResource(
     if case .end = request {
         
         var obClient: OBClientProfile!
-        var accountAccessConsent: AccountAccessConsent!
+        var accountAccessConsent: AccountTransactionConsent!
 
         context.eventLoop.makeSucceededFuture(())
             
             // Load account access consent
-            .flatMap({ AccountAccessConsent.load(
+            .flatMap({ AccountTransactionConsent.load(
                 id: accountAccessConsentID,
-                authState: nil
+                state: nil
                 )
             })
             
@@ -69,14 +69,14 @@ func endpointHandlerGetOBATResource(
             
             .flatMap({() -> EventLoopFuture<Void> in
                 
-                class TestBlock: OBATResourceProcesingBlock {
-                    typealias Input2Type = (
+                class TestBlock: AccountTransactionResourceProcesingBlock {
+                    typealias InputType = (
                         obClientProfile: OBClientProfile,
-                        accountAccessConsent: AccountAccessConsent,
+                        accountAccessConsent: AccountTransactionConsent,
                         regexMatch: [String],
                         responseCallback: (HTTPResponseStatus, Data) -> Void
                     )
-                    static func executeInner<T1, T2>(type1: T1.Type, type2: T2.Type, input: Input2Type) throws -> EventLoopFuture<Void> where T1 : OBATApiReadResourceProtocol, T2 : OBATLocalResourceProtocol, T2.OBATApiResourceType == T1.OBATApiReadResourceDataType.OBATApiResourceType {
+                    static func executeInner<T1, T2>(type1: T1.Type, type2: T2.Type, input: InputType) throws -> EventLoopFuture<Void> where T1 : OBATApiReadResourceProtocol, T2 : OBATLocalResourceProtocol, T2.OBATApiResourceType == T1.OBATApiReadResourceDataType.OBATApiResourceType {
                         
                         // Get resource
                         return T1.httpGet(
@@ -107,7 +107,7 @@ func endpointHandlerGetOBATResource(
                 }
                 
                 return try! TestBlock.execute(
-                    obClient.obAccountTransactionAPISettings.apiVersion,
+                    obClient.accountTransactionAPISettings.apiVersion,
                     obatResourceType,
                     (obClient, accountAccessConsent, regexMatch, responseCallback)
                 )

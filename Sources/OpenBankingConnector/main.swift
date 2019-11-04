@@ -31,6 +31,7 @@ import NIOHTTP1
 import Foundation
 import Logging
 import AccountTransactionTypes
+import PaymentInitiationTypes
 
 extension String {
     func chopPrefix(_ prefix: String) -> String? {
@@ -459,6 +460,111 @@ private final class HTTPHandler: ChannelInboundHandler {
                 self.completeResponse(context, trailers: nil, promise: nil)
             }
             
+            /// Examine request to determine endpoint handler, return once one is found
+            func setHandler() {
+                
+                // Loop through Account Transaction resources
+                for accountTransactionResourceVariety in AccountTransactionResourceVariety.allCases {
+                    
+                    // GET {Account Transaction resource}
+                    if
+                        let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
+                            pattern: accountTransactionResourceVariety.urlRegexGetResource()
+                            )),
+                        let accountAccessConsentID = getSingleValuedHeader(fieldName: "x-obc-account-access-consent-id", headers: request.headers),
+                        request.method == .GET
+                    {
+                        self.handler = { endpointHandlerGetOBATResource(
+                            context: $0,
+                            request: $1,
+                            obatResourceType: accountTransactionResourceVariety,
+                            regexMatch: regexMatch,
+                            accountAccessConsentID: accountAccessConsentID,
+                            responseCallback: responseCallback
+                            )}
+                        return
+                    }
+                }
+                
+                // Loop through Account Transaction Request OB objects
+                for accountTransactionRequestObjectVariety in AccountTransactionRequestObjectVariety.allCases {
+                    
+                    // POST {Account Transaction request OB object}
+                    if
+                        let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
+                            pattern: accountTransactionRequestObjectVariety.urlRegexPostObject()
+                            )),
+                        let obClientProfileID = getSingleValuedHeader(fieldName: "x-obc-ob-client-id", headers: request.headers),
+                        request.method == .POST
+                    {
+                        self.buffer.clear()
+                        self.handler = { endpointHandlerPostAccountTransactionRequestObject(
+                            context: $0,
+                            request: $1,
+                            requestObjectVariety: accountTransactionRequestObjectVariety,
+                            regexMatch: regexMatch,
+                            obClientProfileID: obClientProfileID,
+                            responseCallback: responseCallback,
+                            buffer: &self.buffer
+                            )}
+                        return
+                    }
+                }
+                
+                // Loop through Payment Initiation payment consent objects
+                for paymentInitiationPaymentVariety in
+                    PaymentInitiationPaymentVariety.allCases {
+                    
+                    // POST {Payment Initiation payment consent}
+                    if
+                        let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
+                            pattern: paymentInitiationPaymentVariety.urlRegexPostPaymentConsent()
+                            )),
+                        let obClientProfileID = getSingleValuedHeader(fieldName: "x-obc-ob-client-id", headers: request.headers),
+                        request.method == .POST
+                    {
+                        self.buffer.clear()
+                        self.handler = { endpointHandlerPostPaymentInitiationConsent(
+                            context: $0,
+                            request: $1,
+                            requestObjectVariety: paymentInitiationPaymentVariety,
+                            regexMatch: regexMatch,
+                            obClientProfileID: obClientProfileID,
+                            responseCallback: responseCallback,
+                            buffer: &self.buffer
+                            )}
+                        return
+                    }
+                }
+
+                // Loop through Payment Initiation payment objects
+                for paymentInitiationPaymentVariety in
+                    PaymentInitiationPaymentVariety.allCases {
+
+                    // POST {Payment Initiation payment}
+                    if
+                        let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
+                            pattern: paymentInitiationPaymentVariety.urlRegexPostPayment()
+                            )),
+                        let paymentInitiationConsentID = getSingleValuedHeader(fieldName: "x-obc-consent-id", headers: request.headers),
+                        request.method == .POST
+                    {
+                        self.buffer.clear()
+                        self.handler = {
+                            endpointHandlerPostPaymentInitiationPayment(
+                                context: $0,
+                                request: $1,
+                                requestObjectVariety: paymentInitiationPaymentVariety,
+                                regexMatch: regexMatch,
+                                paymentInitiationConsentID: paymentInitiationConsentID,
+                                responseCallback: responseCallback,
+                                buffer: &self.buffer
+                            )}
+                        return
+                    }
+                }
+            }
+            
             // Validate request and assign handler
             let httpMethod = request.method
             if let path = request.uri.chopPrefix("/software-statement-profiles") {
@@ -482,17 +588,6 @@ private final class HTTPHandler: ChannelInboundHandler {
                         buffer: &self.buffer
                         )}
                 }
-            } else if let path = request.uri.chopPrefix("/account-access-consents") {
-                let obClientIDArray = request.headers[canonicalForm: "x-obc-ob-client-id"]
-                if obClientIDArray.count == 1 {
-                    let obClientID = String(obClientIDArray[0])
-                    self.handler = {
-                        routeHandlerAccountAccessConsents(
-                            context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
-                            obClientID: obClientID
-                        )
-                    }
-                }
             } else if let path = request.uri.chopPrefix("/auth") {
                 if path == "/fragment-redirect",
                     httpMethod == .GET
@@ -507,28 +602,7 @@ private final class HTTPHandler: ChannelInboundHandler {
                         )}
                 }
             } else {
-                // Loop through OBAT resources
-                for obatResourceType in OBATResourceType.allCases {
-                    
-                    // GET OBAT resource
-                    if
-                        let regexMatch = request.uri.matchesRegex(regex: try! NSRegularExpression(
-                            pattern: obatResourceType.urlRegexGetOBATResource()
-                            )),
-                        let accountAccessConsentID = getSingleValuedHeader(fieldName: "x-obc-account-access-consent-id", headers: request.headers),
-                        httpMethod == .GET
-                    {
-                        self.handler = { endpointHandlerGetOBATResource(
-                            context: $0,
-                            request: $1,
-                            obatResourceType: obatResourceType,
-                            regexMatch: regexMatch,
-                            accountAccessConsentID: accountAccessConsentID,
-                            responseCallback: responseCallback
-                            )}
-                        break
-                    }
-                }
+                setHandler()
             }
             
             if let handler = self.handler {

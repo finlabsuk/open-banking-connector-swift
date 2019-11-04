@@ -11,6 +11,7 @@ import Foundation
 /** The Risk section is sent by the initiating party to the ASPSP. It is used to specify additional details for risk scoring for Account Info. */
 
 public struct OBRisk2: Codable {
+    public init() { self = try! JSONDecoder().decode(Self.self , from: Data("{}".utf8))}
 
 
 

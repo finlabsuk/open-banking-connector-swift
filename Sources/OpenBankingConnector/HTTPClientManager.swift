@@ -222,6 +222,22 @@ final class HTTPClientManager {
         ])
     }
     
+    func getRequest(url: URL, xFapiFinancialId: String?, authHeader: String?) -> HTTPClient.Request {
+        let headers = [
+            "Cache-Control": "no-cache",
+            "x-fapi-financial-id": xFapiFinancialId,
+            "Authorization": authHeader,
+            "Accept": "application/json"
+            ]
+            .compactMapValues { $0 } // remove Authorization or x-fapi-financial-id if values nil
+            .map { ($0, $1) }
+        return try! HTTPClient.Request(
+            url: url,
+            method: .GET,
+            headers: HTTPHeaders(headers)
+        )
+    }
+    
     func postRequestRegistration(url: URL) -> HTTPClient.Request {
         return try! HTTPClient.Request(
             url: url,
@@ -250,20 +266,67 @@ final class HTTPClientManager {
         )
     }
     
-    func getRequest(url: URL, xFapiFinancialId: String?, authHeader: String?) -> HTTPClient.Request {
-        let headers = [
+    func httpPost<ResponseType: Decodable>(
+        url: URL,
+        headers: [String : String?],
+        body: Data,
+        isFormUrlencoded: Bool = false,
+        httpClientMTLSConfiguration: HTTPClientMTLSConfiguration
+    ) -> EventLoopFuture<ResponseType> {
+        
+        // Populate dictionary with default headers
+        var headersNew = [
             "Cache-Control": "no-cache",
-            "x-fapi-financial-id": xFapiFinancialId,
-            "Authorization": authHeader,
+            "Content-Type": isFormUrlencoded ? "application/x-www-form-urlencoded" : "application/json",
             "Accept": "application/json"
-            ]
-            .compactMapValues { $0 } // remove Authorization or x-fapi-financial-id if values nil
-            .map { ($0, $1) }
-        return try! HTTPClient.Request(
-            url: url,
-            method: .GET,
-            headers: HTTPHeaders(headers)
+        ]
+        // Overwrite with supplied headers
+        headers.forEach { headersNew[$0] = $1 }
+        // Covert to correct format
+        let headersFinal = HTTPHeaders(
+            headersNew
+                .compactMapValues { $0 } // remove headers with nil value
+                .map { ($0, $1) }
         )
+        let request = try! HTTPClient.Request(
+            url: url,
+            method: .POST,
+            headers: headersFinal,
+            body: .data(body)
+        )
+        
+        return executeMTLS(
+            request: request,
+            httpClientMTLSConfiguration: httpClientMTLSConfiguration
+        )
+            
+            .flatMapThrowing({ response -> ResponseType in
+                if response.status == .created,
+                    var body = response.body {
+                    
+                    // Decode response
+                    let data = body.readData(length: body.readableBytes)!
+                    print(String(decoding: data, as: UTF8.self))
+                    let responseObject: ResponseType
+                    if
+                        let responseObjectTmp = try? hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(ResponseType.self, from: data)
+                    {
+                        responseObject = responseObjectTmp
+                    } else {
+                        let responseObjectTmp = try hcm.jsonDecoderDateFormatISO8601WithSeconds.decode(ResponseType.self, from: data)
+                        responseObject = responseObjectTmp
+                    }
+                    return responseObject
+                    
+                } else {
+                    print("POST \(url) \(response.status.code)")
+                    if var bodyTmp = response.body,
+                        let bodyString = bodyTmp.readString(length: bodyTmp.readableBytes) {
+                        print(bodyString)
+                    }
+                    throw "Bad response status code"
+                }
+            })
     }
     
     func executeMTLS(

@@ -11,8 +11,9 @@
 // ********************************************************************************
 
 import PaymentInitiationTypeRequirements
+import BaseServices
 
-public typealias OBWriteDomesticConsentType = OBWriteDomesticConsent3
+public typealias OBWriteDomesticConsentApi = OBWriteDomesticConsent3
 public typealias OBWriteDomesticConsentDataType = OBWriteDomesticConsent3Data
 public typealias OBWriteDomesticDataInitiationType = OBWriteDomestic2DataInitiation
 public typealias OBWriteDomesticDataInitiationInstructedAmountType = OBWriteDomestic2DataInitiationInstructedAmount
@@ -27,7 +28,12 @@ public typealias OBWriteDomesticConsentDataSCASupportDataType = OBWriteDomesticC
 public typealias OBRiskApi = OBRisk1
 public typealias OBRiskDeliveryAddress = OBRisk1DeliveryAddress
 
-extension OBWriteDomesticConsentType: OBWriteDomesticConsentProtocol { }
+extension OBWriteDomesticConsentApi: OBWriteDomesticConsentApiProtocol {
+    public typealias ResponseApi = OBWriteDomesticConsentResponseApi
+}
+extension OBWriteDomesticConsentResponse3: tmp2 { }
+extension OBWriteDomesticConsentResponse3Data: tmp1 { }
+
 extension OBWriteDomesticConsentDataType: OBWriteDomesticConsentDataProtocol { }
 extension OBWriteDomesticDataInitiationType: OBWriteDomesticDataInitiationProtocol {
     public init(instructionIdentification: String, endToEndIdentification: String, localInstrument: String?, instructedAmount: OBWriteDomestic2DataInitiationInstructedAmount, debtorAccount: OBWriteDomestic2DataInitiationDebtorAccount?, creditorAccount: OBWriteDomestic2DataInitiationCreditorAccount, remittanceInformation: OBWriteDomestic2DataInitiationRemittanceInformation?) {

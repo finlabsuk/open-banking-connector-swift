@@ -31,8 +31,8 @@ public struct OBRiskLocal<OBRiskApi: OBRiskApiProtocol>: Codable {
         case deliveryAddress = "DeliveryAddress"
     }
     
-    func apiValue() -> OBRiskApi {
-        OBRiskApi.init(paymentContextCode: paymentContextCode, merchantCategoryCode: merchantCategoryCode, merchantCustomerIdentification: merchantCustomerIdentification, deliveryAddress: deliveryAddress?.apiValue())
+    func obRiskApi() -> OBRiskApi {
+        OBRiskApi.init(paymentContextCode: paymentContextCode, merchantCategoryCode: merchantCategoryCode, merchantCustomerIdentification: merchantCustomerIdentification, deliveryAddress: deliveryAddress?.obRiskDeliveryAddress())
     }
 
 }
@@ -58,7 +58,7 @@ public struct OBRiskDeliveryAddressLocal<OBRiskDeliveryAddress: OBRiskDeliveryAd
         case country = "Country"
     }
     
-    func apiValue() -> OBRiskDeliveryAddress {
+    func obRiskDeliveryAddress() -> OBRiskDeliveryAddress {
         OBRiskDeliveryAddress.init(addressLine: addressLine, streetName: streetName, buildingNumber: buildingNumber, postCode: postCode, townName: townName, countrySubDivision: countrySubDivision, country: country)
     }
 

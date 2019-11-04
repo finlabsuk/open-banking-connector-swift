@@ -13,7 +13,7 @@
 import PaymentInitiationTypeRequirements
 import BaseServices
 
-public typealias OBWriteDomesticConsentType = OBWriteDomesticConsent2
+public typealias OBWriteDomesticConsentApi = OBWriteDomesticConsent2
 public typealias OBWriteDomesticConsentDataType = OBWriteDataDomesticConsent2
 public typealias OBWriteDomesticDataInitiationType = OBDomestic2
 public typealias OBWriteDomesticDataInitiationInstructedAmountType = OBDomestic2InstructedAmount
@@ -28,7 +28,11 @@ public typealias OBWriteDomesticConsentDataSCASupportDataType = Void
 public typealias OBRiskApi = OBRisk1
 public typealias OBRiskDeliveryAddress = OBRisk1DeliveryAddress
 
-extension OBWriteDomesticConsentType: OBWriteDomesticConsentProtocol { }
+extension OBWriteDomesticConsentApi: OBWriteDomesticConsentApiProtocol {
+    public typealias ResponseApi = OBWriteDomesticConsentResponseApi
+}
+extension OBWriteDomesticConsentResponse2: tmp2 { }
+extension OBWriteDataDomesticConsentResponse2: tmp1 { }
 extension OBWriteDomesticConsentDataType: OBWriteDomesticConsentDataProtocol {
     public init(initiation: OBDomestic2, authorisation: OBAuthorisation1?, sCASupportData: Void?) {
         self.init(initiation: initiation, authorisation: authorisation)

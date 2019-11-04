@@ -21,8 +21,8 @@ struct OBAccountTransactionAPISettingsOverrides: Codable {
     }
 }
 
-struct OBAccountTransactionAPISettings: Codable {
-    var apiVersion: OBAccountTransactionAPIVersion
+struct AccountTransactionApiSettings: Codable {
+    var apiVersion: AccountTransactionApiVersion
     var accountAccessConsentPermissions: [OBAccountTransactionAccountAccessConsentPermissions] = [
         .readAccountsBasic,
         .readAccountsDetail,
@@ -56,10 +56,10 @@ struct OBAccountTransactionAPISettings: Codable {
     }
 }
 
-extension OBAccountTransactionAPISettings {
+extension AccountTransactionApiSettings {
 
     init(
-        apiVersion: OBAccountTransactionAPIVersion,
+        apiVersion: AccountTransactionApiVersion,
         obBaseURL: String,
         overrides: OBAccountTransactionAPISettingsOverrides?
     ) {

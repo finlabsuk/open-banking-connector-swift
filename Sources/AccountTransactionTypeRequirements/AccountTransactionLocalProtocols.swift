@@ -10,6 +10,21 @@
 //
 // ********************************************************************************
 
-import PaymentInitiationApiV3p1p1Types
-import PaymentInitiationApiV3p1p2Types
+import Foundation
+import BaseServices
+
+public protocol OBATLocalResourceProtocol: StoredItem {
+    associatedtype OBATApiResourceType: OBATApiResourceProtocol
+    init(
+        softwareStatementProfileId: String,
+        issuerURL: String,
+        obClientId: String,
+        userId: String,
+        aspspData: OBATApiResourceType
+    )
+}
+
+public protocol AccountTransactionRequestObjectLocalProtocol: Codable {
+    associatedtype AccountTransactionRequestObjectApi: AT_PI_CF_PostRequestApiProtocol
+}
 

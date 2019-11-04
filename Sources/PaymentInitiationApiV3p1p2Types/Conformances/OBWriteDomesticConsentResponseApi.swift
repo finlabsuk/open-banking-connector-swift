@@ -12,19 +12,23 @@
 
 import PaymentInitiationTypeRequirements
 
-public typealias OBWriteDomesticConsentResponseType = OBWriteDomesticConsentResponse3
+public typealias OBWriteDomesticConsentResponseApi = OBWriteDomesticConsentResponse3
 public typealias OBWriteDomesticConsentResponseDataType = OBWriteDomesticConsentResponse3Data
 public typealias OBWriteDomesticConsentResponseDataCharges = OBWriteDomesticConsentResponse3DataCharges
 public typealias OBActiveOrHistoricCurrencyAndAmountType = OBActiveOrHistoricCurrencyAndAmount
 public typealias OBChargeBearerTypeCode = OBChargeBearerType1Code
 
-extension OBWriteDomesticConsentResponseType: OBWriteDomesticConsentResponseApiProtocol {
+extension OBWriteDomesticConsentResponseApi: OBWriteDomesticConsentResponseApiProtocol {
     public var linksOptional: Links? { return links }
     public var metaOptional: Meta? { return meta }
 }
 extension Links: LinksApiProtocol { }
 extension Meta: MetaApiProtocol { }
-extension OBWriteDomesticConsentResponseDataType: OBWriteDomesticConsentResponseDataApiProtocol { }
+extension OBWriteDomesticConsentResponseDataType: OBWriteDomesticConsentResponseDataApiProtocol {
+    public var statusEnum: OBWriteDomesticConsentResponseDataApiStatus? {
+        return OBWriteDomesticConsentResponseDataApiStatus(rawValue: status.rawValue)
+    }
+}
 extension OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol { }
 extension OBActiveOrHistoricCurrencyAndAmount: OBActiveOrHistoricCurrencyAndAmountApiProtocol { }
 

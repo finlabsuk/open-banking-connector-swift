@@ -413,7 +413,7 @@ protocol OBAIPartyProtocol: OBAIResourceProtocol {
 
 // MARK:- OBReadWrite Type Names and Protocol
 
-func obATReadConsentType(apiVersion: OBAccountTransactionAPIVersion) -> OBATReadConsentProtocolExposedMethods.Type {
+func obATReadConsentType(apiVersion: AccountTransactionApiVersion) -> OBATReadConsentProtocolExposedMethods.Type {
     switch apiVersion {
     case .V3p0p0:
         return OBATV3p0p0Types.obATReadConsentType()
@@ -440,7 +440,7 @@ public enum OBAIReadResourceTypeName: String {
     case OBAIReadConsentResponse
 }
 
-extension OBAccountTransactionAPIVersion {
+extension AccountTransactionApiVersion {
     func returnOBAIReadResourceType(typeName: OBAIReadResourceTypeName) -> OBItem.Type {
         switch self {
         case .V3p0p0:

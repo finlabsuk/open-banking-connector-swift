@@ -10,14 +10,13 @@
 //
 // ********************************************************************************
 
-import AccountTransactionTypeRequirements
+import PaymentInitiationTypeRequirements
 
-public class OBATV3p1p2ReadResourceTypes: OBATApiReadResourceTypesProtocol {
-    public typealias OBATApiReadTransactionType = OBReadTransactionAlias
-    public typealias OBATApiReadAccountType = OBApiReadAccountAlias
-}
+public typealias OBWriteDomesticApi = OBWriteDomestic2
+public typealias OBWriteDomesticDataApi = OBWriteDataDomestic2
 
-public class AccountTransactionRequestOBObjectApiV3p1p2Types: AccountTransactionRequestObjectApiTypesProtocol {
-    public typealias OBReadConsentApiType = OBReadConsentApi
-    
+extension OBWriteDomesticApi: OBWriteDomesticApiProtocol {
+    public typealias ResponseApi = OBWriteDomesticResponseApi
 }
+extension OBWriteDomesticDataApi: OBWriteDomesticDataApiProtocol { }
+

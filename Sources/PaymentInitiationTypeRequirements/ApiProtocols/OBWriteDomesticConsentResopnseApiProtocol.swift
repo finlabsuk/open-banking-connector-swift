@@ -11,18 +11,6 @@
 // ********************************************************************************
 
 import Foundation
-import BaseServices
-
-public protocol OBWriteDomesticConsentResponseApiProtocol: Codable {
-    associatedtype OBWriteDomesticConsentResponseData: OBWriteDomesticConsentResponseDataApiProtocol
-    associatedtype OBRisk: OBRiskApiProtocol
-    associatedtype Links: LinksApiProtocol
-    associatedtype Meta: MetaApiProtocol
-    var data: OBWriteDomesticConsentResponseData { get }
-    var risk: OBRisk { get }
-    var linksOptional: Links? { get }
-    var metaOptional: Meta? { get }
-}
 
 public protocol LinksApiProtocol: Codable {
     var _self: String { get }
@@ -38,12 +26,39 @@ public protocol MetaApiProtocol: Codable {
     var lastAvailableDateTime: String?  { get } //ISODateTime?
 }
 
-public protocol OBWriteDomesticConsentResponseDataApiProtocol {
+public protocol OBWritePaymentConsentResponseApiProtocol: Codable {
+    associatedtype OBWritePaymentConsentResponseData: OBWritePaymentConsentResponseDataApiProtocol
+    associatedtype OBRisk: OBRiskApiProtocol
+    associatedtype Links: LinksApiProtocol
+    associatedtype Meta: MetaApiProtocol
+    var data: OBWritePaymentConsentResponseData { get }
+    var risk: OBRisk { get }
+    var linksOptional: Links? { get }
+    var metaOptional: Meta? { get }
+}
+
+public protocol OBWriteDomesticConsentResponseApiProtocol: OBWritePaymentConsentResponseApiProtocol where OBWritePaymentConsentResponseData: OBWriteDomesticConsentResponseDataApiProtocol { }
+
+public protocol OBWritePaymentConsentResponseDataApiProtocol: Codable {
+    associatedtype StatusEnum: RawRepresentable, Codable where StatusEnum.RawValue == String
+    /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
+    var consentId: String { get }
+    var statusEnum: StatusEnum? { get }
+}
+
+public enum OBWriteDomesticConsentResponseDataApiStatus: String, Codable {
+    case authorised = "Authorised"
+    case awaitingAuthorisation = "AwaitingAuthorisation"
+    case consumed = "Consumed"
+    case rejected = "Rejected"
+}
+
+public protocol OBWriteDomesticConsentResponseDataApiProtocol: OBWritePaymentConsentResponseDataApiProtocol where StatusEnum == OBWriteDomesticConsentResponseDataApiStatus {
     associatedtype OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol
     associatedtype OBWriteDomesticDataInitiation: OBWriteDomesticDataInitiationProtocol
     associatedtype OBWriteDomesticConsentDataAuthorisation: OBWriteDomesticConsentDataAuthorisationProtocol
     associatedtype OBWriteDomesticConsentDataSCASupportData
-    associatedtype Status
+    associatedtype Status: RawRepresentable, Codable where Status.RawValue == String
 
     /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
     var consentId: String { get }
@@ -51,6 +66,7 @@ public protocol OBWriteDomesticConsentResponseDataApiProtocol {
     var creationDateTime: Date { get }
     /** Specifies the status of consent resource in code form. */
     var status: Status { get }
+    var statusEnum: OBWriteDomesticConsentResponseDataApiStatus? { get }
     /** Date and time at which the resource status was updated.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
     var statusUpdateDateTime: Date { get }
     /** Specified cut-off date and time for the payment consent.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */

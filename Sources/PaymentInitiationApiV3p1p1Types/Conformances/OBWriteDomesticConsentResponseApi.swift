@@ -12,11 +12,11 @@
 
 import PaymentInitiationTypeRequirements
 
-public typealias OBWriteDomesticConsentResponseType = OBWriteDomesticConsentResponse2
+public typealias OBWriteDomesticConsentResponseApi = OBWriteDomesticConsentResponse2
 public typealias OBActiveOrHistoricCurrencyAndAmountType = OBCharge2Amount
 public typealias OBChargeBearerTypeCode = OBChargeBearerType1Code
 
-extension OBWriteDomesticConsentResponseType: OBWriteDomesticConsentResponseApiProtocol {
+extension OBWriteDomesticConsentResponseApi: OBWriteDomesticConsentResponseApiProtocol {
     public var linksOptional: Links? { return links }
     public var metaOptional: Meta? { return meta }
     public typealias OBWriteDomesticConsentResponseData = OBWriteDataDomesticConsentResponse2
@@ -28,6 +28,9 @@ extension Meta: MetaApiProtocol { }
 public typealias OBWriteDomesticConsentResponseDataType = OBWriteDataDomesticConsentResponse2
 public typealias OBWriteDomesticConsentResponseDataCharges = OBCharge2
 extension OBWriteDomesticConsentResponseDataType: OBWriteDomesticConsentResponseDataApiProtocol {
+    public var statusEnum: OBWriteDomesticConsentResponseDataApiStatus? {
+        return OBWriteDomesticConsentResponseDataApiStatus(rawValue: status.rawValue)
+    }
     public var sCASupportData: Void? { return nil }
     public typealias OBWriteDomesticDataInitiation = OBDomestic2
     public typealias OBWriteDomesticConsentDataAuthorisation = OBAuthorisation1

@@ -14,32 +14,52 @@ import Foundation
 import BaseServices
 import PaymentInitiationTypeRequirements
 
-public struct OBWriteDomesticConsentLocal<OBWriteDomesticConsentApi: OBWriteDomesticConsentProtocol>: Codable {
-
-    public var data: OBWriteDomesticConsentDataLocal<OBWriteDomesticConsentApi.PaymentInitiationWriteResourceDataType>
-    public var risk: OBRiskLocal<OBWriteDomesticConsentApi.OBRiskApi>
-
-    public init(data: OBWriteDomesticConsentDataLocal<OBWriteDomesticConsentApi.PaymentInitiationWriteResourceDataType>, risk: OBRiskLocal<OBWriteDomesticConsentApi.OBRiskApi>) {
+public struct OBWriteDomesticConsentLocal<
+    OBWritePaymentConsentApi: OBWriteDomesticConsentApiProtocol,
+    OBWritePaymentApi: OBWriteDomesticApiProtocol
+    >: OBWritePaymentConsentLocalProtocol
+{
+    
+    public var data: OBWriteDomesticConsentDataLocal<
+    OBWritePaymentConsentApi.OBWritePaymentConsentData,
+    OBWritePaymentApi.OBWritePaymentData
+    >
+    public var risk: OBRiskLocal<OBWritePaymentConsentApi.OBRiskApi>
+    
+    public init(data: OBWriteDomesticConsentDataLocal<
+        OBWritePaymentConsentApi.OBWritePaymentConsentData,
+        OBWritePaymentApi.OBWritePaymentData
+        >, risk: OBRiskLocal<OBWritePaymentConsentApi.OBRiskApi>) {
         self.data = data
         self.risk = risk
     }
-
+    
     public enum CodingKeys: String, CodingKey {
         case data = "Data"
         case risk = "Risk"
     }
     
-    func apiValue() -> OBWriteDomesticConsentApi {
-        OBWriteDomesticConsentApi.init(
-            data: data.apiValue(),
-            risk: risk.apiValue()
+    public func obWritePaymentConsentApi() -> OBWritePaymentConsentApi {
+        OBWritePaymentConsentApi.init(
+            data: data.obWriteDomesticConsentDataApi(),
+            risk: risk.obRiskApi()
         )
     }
-
+    public func obWritePaymentApi(consentId: String) -> OBWritePaymentApi {
+        OBWritePaymentApi.init(
+            data: data.obWriteDomesticDataApi(consentId: consentId),
+            // Forced cast necessary as compiler forgets OBRiskApi in both contexts are same type
+            risk: risk.obRiskApi() as! OBWritePaymentApi.OBRiskApi
+        )
+    }
+    
 }
 
-public struct OBWriteDomesticConsentDataLocal<OBWriteDomesticConsentDataApi: OBWriteDomesticConsentDataProtocol>: Codable {
-
+public struct OBWriteDomesticConsentDataLocal<
+    OBWriteDomesticConsentDataApi: OBWriteDomesticConsentDataProtocol,
+    OBWriteDomesticDataApi: OBWriteDomesticDataApiProtocol
+>: Codable {
+    
     public var initiation: OBWriteDomesticDataInitiationLocal<OBWriteDomesticConsentDataApi.OBWriteDomesticDataInitiationType>
     public var authorisation: OBWriteDomesticConsentDataAuthorisationLocal<OBWriteDomesticConsentDataApi.OBWriteDomesticConsentDataAuthorisationType>?
     public var sCASupportData: OBWriteDomesticConsentDataSCASupportDataLocal<OBWriteDomesticConsentDataApi.OBWriteDomesticConsentDataSCASupportDataType>?
@@ -56,22 +76,26 @@ public struct OBWriteDomesticConsentDataLocal<OBWriteDomesticConsentDataApi: OBW
         case sCASupportData = "SCASupportData"
     }
 
-    func apiValue() -> OBWriteDomesticConsentDataApi {
+    public func obWriteDomesticConsentDataApi() -> OBWriteDomesticConsentDataApi {
         OBWriteDomesticConsentDataApi.init(
-            initiation: initiation.apiValue(),
-            authorisation: authorisation?.apiValue(),
-            sCASupportData: sCASupportData?.apiValue()
+            initiation: initiation.obWriteDomesticDataInitiationApi(),
+            authorisation: authorisation?.obWriteDomesticConsentDataAuthorisationType(),
+            sCASupportData: sCASupportData?.obWriteDomesticConsentDataSCASupportDataType()
         )
     }
-
+    public func obWriteDomesticDataApi(consentId: String) -> OBWriteDomesticDataApi {
+        OBWriteDomesticDataApi.init(
+            consentId: consentId,
+            // Forced cast necessary as compiler forgets OBWriteDomesticDataInitiationApi in both contexts are same type
+            initiation: initiation.obWriteDomesticDataInitiationApi() as! OBWriteDomesticDataApi.OBWriteDomesticDataInitiationApi
+        )
+    }
 }
-
-
 
 public struct OBWriteDomesticDataInitiationLocal<OBWriteDomesticDataInitiationApi: OBWriteDomesticDataInitiationProtocol>: Codable {
     public var instructionIdentification: String
     public var endToEndIdentification: String
-    public var localInstrument: String // OBExternalLocalInstrument1Code?
+    public var localInstrument: String? // OBExternalLocalInstrument1Code?
     public var instructedAmount: OBWriteDomesticDataInitiationInstructedAmountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationInstructedAmountType>
     public var debtorAccount: OBWriteDomesticDataInitiationDebtorAccountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationDebtorAccountType>?
     public var creditorAccount: OBWriteDomesticDataInitiationCreditorAccountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationCreditorAccountType>
@@ -103,15 +127,15 @@ public struct OBWriteDomesticDataInitiationLocal<OBWriteDomesticDataInitiationAp
         //case supplementaryData = "SupplementaryData"
     }
     
-    func apiValue() -> OBWriteDomesticDataInitiationApi {
+    public func obWriteDomesticDataInitiationApi() -> OBWriteDomesticDataInitiationApi {
         OBWriteDomesticDataInitiationApi.init(
             instructionIdentification: instructionIdentification,
             endToEndIdentification: endToEndIdentification,
             localInstrument: localInstrument,
-            instructedAmount: instructedAmount.apiValue(),
-            debtorAccount: debtorAccount?.apiValue(),
-            creditorAccount: creditorAccount.apiValue(),
-            remittanceInformation: remittanceInformation?.apiValue()
+            instructedAmount: instructedAmount.obWriteDomesticDataInitiationInstructedAmountType(),
+            debtorAccount: debtorAccount?.obWriteDomesticDataInitiationDebtorAccountType(),
+            creditorAccount: creditorAccount.obWriteDomesticDataInitiationCreditorAccountType(),
+            remittanceInformation: remittanceInformation?.obWriteDomesticDataInitiationRemittanceInformationType()
         )
     }
     
@@ -132,7 +156,7 @@ public struct OBWriteDomesticDataInitiationInstructedAmountLocal<OBWriteDomestic
         case currency = "Currency"
     }
     
-    func apiValue() -> OBWriteDomesticDataInitiationInstructedAmountType {
+    public func obWriteDomesticDataInitiationInstructedAmountType() -> OBWriteDomesticDataInitiationInstructedAmountType {
         OBWriteDomesticDataInitiationInstructedAmountType.init(amount: amount, currency: currency)
     }
 
@@ -160,7 +184,7 @@ public struct OBWriteDomesticDataInitiationDebtorAccountLocal<OBWriteDomesticDat
         //case secondaryIdentification = "SecondaryIdentification"
     }
     
-    func apiValue() -> OBWriteDomesticDataInitiationDebtorAccountType {
+    public func obWriteDomesticDataInitiationDebtorAccountType() -> OBWriteDomesticDataInitiationDebtorAccountType {
         OBWriteDomesticDataInitiationDebtorAccountType.init(schemeName: schemeName, identification: identification, name: name)
     }
 
@@ -193,7 +217,7 @@ public struct OBWriteDomesticDataInitiationCreditorAccountLocal<OBWriteDomesticD
         //case secondaryIdentification = "SecondaryIdentification"
     }
     
-    func apiValue() -> OBWriteDomesticDataInitiationCreditorAccountType {
+    public func obWriteDomesticDataInitiationCreditorAccountType() -> OBWriteDomesticDataInitiationCreditorAccountType {
         OBWriteDomesticDataInitiationCreditorAccountType.init(schemeName: schemeName, identification: identification, name: name)
     }
 
@@ -216,7 +240,7 @@ public struct OBWriteDomesticDataInitiationRemittanceInformationLocal<OBWriteDom
         case reference = "Reference"
     }
 
-    func apiValue() -> OBWriteDomesticDataInitiationRemittanceInformationType {
+    public func obWriteDomesticDataInitiationRemittanceInformationType() -> OBWriteDomesticDataInitiationRemittanceInformationType {
         OBWriteDomesticDataInitiationRemittanceInformationType.init(unstructured: unstructured, reference: reference)
     }
 
@@ -239,7 +263,7 @@ public struct OBWriteDomesticConsentDataAuthorisationLocal<OBWriteDomesticConsen
         case completionDateTime = "CompletionDateTime"
     }
     
-    func apiValue() -> OBWriteDomesticConsentDataAuthorisationType {
+    public func obWriteDomesticConsentDataAuthorisationType() -> OBWriteDomesticConsentDataAuthorisationType {
         OBWriteDomesticConsentDataAuthorisationType.init(authorisationType: authorisationType, completionDateTime: completionDateTime)
     }
 
@@ -286,10 +310,10 @@ public struct OBWriteDomesticConsentDataSCASupportDataLocal<OBWriteDomesticConse
 // This extension is ugly but necessary since Swift does not support OR operator in generic WHERE clause to constrain OBWriteDomesticConsentDataSCASupportDataType
 // The two extensions after this one are the valid cases.
 extension OBWriteDomesticConsentDataSCASupportDataLocal {
-    func apiValue() -> OBWriteDomesticConsentDataSCASupportDataType { fatalError("OBWriteDomesticConsentDataSCASupportDataType must either be Void or conform to OBWriteDomesticConsentDataSCASupportDataProtocol") }
+    public func obWriteDomesticConsentDataSCASupportDataType() -> OBWriteDomesticConsentDataSCASupportDataType { fatalError("OBWriteDomesticConsentDataSCASupportDataType must either be Void or conform to OBWriteDomesticConsentDataSCASupportDataProtocol") }
 }
 extension OBWriteDomesticConsentDataSCASupportDataLocal where OBWriteDomesticConsentDataSCASupportDataType: OBWriteDomesticConsentDataSCASupportDataProtocol {
-    func apiValue() -> OBWriteDomesticConsentDataSCASupportDataType {
+    public func obWriteDomesticConsentDataSCASupportDataType() -> OBWriteDomesticConsentDataSCASupportDataType {
         let requestedSCAExemptionTypeTmp: OBWriteDomesticConsentDataSCASupportDataType.RequestedSCAExemptionType? = (requestedSCAExemptionType != nil) ?
             OBWriteDomesticConsentDataSCASupportDataType.RequestedSCAExemptionType(rawValue: requestedSCAExemptionType!.rawValue) : nil
         let appliedAuthenticationApproachTmp: OBWriteDomesticConsentDataSCASupportDataType.AppliedAuthenticationApproach? = (appliedAuthenticationApproach != nil) ?
@@ -301,5 +325,5 @@ extension OBWriteDomesticConsentDataSCASupportDataLocal where OBWriteDomesticCon
     }
 }
 extension OBWriteDomesticConsentDataSCASupportDataLocal where OBWriteDomesticConsentDataSCASupportDataType == Void {
-    func apiValue() -> OBWriteDomesticConsentDataSCASupportDataType { }
+    public func obWriteDomesticConsentDataSCASupportDataType() -> OBWriteDomesticConsentDataSCASupportDataType { }
 }

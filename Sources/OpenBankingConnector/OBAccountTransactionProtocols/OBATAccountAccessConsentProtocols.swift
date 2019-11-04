@@ -14,23 +14,15 @@ import Foundation
 import NIO
 import AsyncHTTPClient
 import AccountTransactionTypes
+import BaseServices
 
 // MARK:- Account access consent protocols
 
 protocol InitProtocol2: Codable {
         init()
 }
-extension InitProtocol2 {
-        init() { self = try! JSONDecoder().decode(Self.self , from: Data("{}".utf8))}
-}
 
 protocol OBATReadConsentProtocolExposedMethods {
-    func httpPost(
-        obClient: OBClientProfile,
-        obEndpointPath: String,
-        authHeader: String,
-        on eventLoop: EventLoop
-    ) -> EventLoopFuture<AccountAccessConsent>
     init(
         permissions: [OBAccountTransactionAccountAccessConsentPermissions],
         expirationDateTime: Date,
@@ -59,85 +51,6 @@ extension OBATReadConsentProtocol where OBAIReadResourceDataType: OBAIReadConsen
             transactionToDateTime: transactionToDateTime
         )
         self.init(data: data, risk: RiskType())
-    }
-    func httpPost(
-        obClient: OBClientProfile,
-        obEndpointPath: String,
-        authHeader: String,
-        on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
-    ) -> EventLoopFuture<AccountAccessConsent> {
-        
-        return eventLoop.makeSucceededFuture(())
-            
-            // Post claims
-            .flatMap({ () -> EventLoopFuture<HTTPClient.Response> in
-                
-                let url = obClient.obAccountTransactionAPISettings.obBaseURL + obEndpointPath
-                let xFapiFinancialId = obClient.xFapiFinancialId
-                var request = hcm.postRequest(
-                    url: URL(string: url)!,
-                    xFapiFinancialId: xFapiFinancialId,
-                    authHeader: authHeader
-                )
-                let bodyData = try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(self)
-                // print(String(decoding: bodyData, as: UTF8.self))
-                request.body = .data(bodyData)
-                return hcm.executeMTLS(
-                    request: request,
-                    httpClientMTLSConfiguration: obClient.httpClientMTLSConfiguration
-                )
-            })
-            
-            // Decode response and create AccountAccessConsent
-            .flatMapThrowing({ response -> AccountAccessConsent in
-                if response.status == .created,
-                    var body = response.body {
-                    
-                    // Decode response
-                    let data = body.readData(length: body.readableBytes)!
-                    print(String(decoding: data, as: UTF8.self))
-                    let responseObject: OBAIReadResourceType
-                    if
-                        let responseObjectTmp = try? hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBAIReadResourceType.self, from: data) {
-                        responseObject = responseObjectTmp
-                    } else if
-                        let responseObjectTmp = try? hcm.jsonDecoderDateFormatISO8601WithSeconds.decode(OBAIReadResourceType.self, from: data) {
-                        responseObject = responseObjectTmp
-                    }
-                    else {
-//                        let responseObjectTmp = try hcm.jsonDecoderDateFormatISO8601WithSeconds.decode(OBAIReadResourceType.self, from: data)
-                        throw "Can't decode"
-                    }
-                    print(response.status.code)
-                    print(responseObject)
-                    
-                    // Create AccountAccessConsent
-                    let obRequestObjectClaims = obClient.getOBRequestObjectClaims(
-                        redirect_uri: obClient.registrationClaims.redirect_uris[0],
-                        scope: .stringWithSpaces("openid accounts"),
-                        intentId: responseObject.data.consentId
-                    )
-                    return AccountAccessConsent(
-                        softwareStatementProfileId: obClient.softwareStatementProfileId,
-                        issuerURL: obClient.issuerURL,
-                        obClientId: obClient.id,
-                        obRequestObjectClaims: obRequestObjectClaims
-                    )
-
-                } else {
-                    if var bodyTmp = response.body,
-                        let bodyString = bodyTmp.readString(length: bodyTmp.readableBytes) {
-                        print(bodyString)
-                    }
-                    throw "Bad response..."
-                }
-            })
-            
-            .flatMapError({error in
-                print(error)
-                fatalError()
-            })
-
     }
 }
 

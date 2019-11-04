@@ -11,59 +11,65 @@
 // ********************************************************************************
 
 import Foundation
-import AccountTransactionTypeRequirements
+import NIO
+import AsyncHTTPClient
+import SQLKit
 import BaseServices
+import PaymentInitiationTypes
 
-public struct OBATLocalAccount<OBATApiResourceType: OBATApiAccountProtocol>: OBATLocalResourceProtocol {
+struct PaymentInitiationDomesticConsent: ConsentProtocol {
     
     // ********************************************************************************
-    // MARK: OBATLocalResourceProtocol Template Code
+    // MARK: StoredItem Template Code
     // ********************************************************************************
-    
-    public init(
-        softwareStatementProfileId: String,
-        issuerURL: String,
-        obClientId: String,
-        userId: String,
-        aspspData: OBATApiResourceType
-    ) {
-        self.softwareStatementProfileId = softwareStatementProfileId
-        self.issuerURL = issuerURL
-        self.obClientId = obClientId
-        self.userId = userId
-        self.aspspData = aspspData
-    }
     
     /// ID used to uniquely identify object (cannot be changed, create new object to change)
     /// - returns: A String object.
-    public let id: String = UUID().uuidString
+    var id: String = UUID().uuidString
     
     // Association of data object with other data objects ("ownership")
     // Empty strings used for types where association doesn't make sense
     /// "FinTech identity"
-    public let softwareStatementProfileId: String
-
+    let softwareStatementProfileId: String
     /// "Bank (ASPSP) identity"
-    public let issuerURL: String
+    let issuerURL: String
     /// "Open Banking client identity"
-    public let obClientId: String
+    var obClientId: String
     /// "User identity"
-    public let userId: String
+    var userId: String = ""
     
     /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
-    public let state: String = ""
+    var state: String {
+        get {
+            return obRequestObjectClaims.state
+        }
+    }
     
     // Timestamp for object creation as best we can determine
-    public let created: Date = Date()
-      
-    // Deletion status for object
-    //@Mutable var isDeleted: Bool = false
-    public var isDeleted: Mutable<Bool> = Mutable<Bool>(wrappedValue: false)
+    let created: Date = Date()
     
-    public var aspspData: OBATApiResourceType
+    // Deletion status for object/object change
+    //@Mutable var isDeleted: Bool = false
+    var isDeleted: Mutable<Bool> = Mutable<Bool>(wrappedValue: false)
     
     // ********************************************************************************
-
-    public var uiName: String? = nil
-    public var currency = "GBP"
+    
+    let typeName = String(describing: Self.self)
+    
+    let obRequestObjectClaims: OBRequestObjectClaims
+    
+    var obTokenEndpointResponse: OBTokenEndpointResponse? = nil
+    
+    init(
+        softwareStatementProfileId: String,
+        issuerURL: String,
+        obClientId: String,
+        obRequestObjectClaims: OBRequestObjectClaims
+    ) {
+        self.softwareStatementProfileId = softwareStatementProfileId
+        self.issuerURL = issuerURL
+        self.obClientId = obClientId
+        self.obRequestObjectClaims = obRequestObjectClaims
+    }
+    
 }

@@ -11,22 +11,23 @@
 // ********************************************************************************
 
 import Foundation
+import BaseServices
 import AccountTransactionTypeRequirements
 import AccountTransactionApiV3p0Types
 import AccountTransactionApiV3p1p1Types
 import AccountTransactionApiV3p1p2Types
 import AccountTransactionLocalTypes
 
-public enum OBAccountTransactionAPIVersion: String, Codable {
+public enum AccountTransactionApiVersion: String, Codable {
     case V3p0p0
     case V3p1p1
     case V3p1p2
 }
 
-public enum OBATResourceType: CaseIterable {
+public enum AccountTransactionResourceVariety: CaseIterable {
     case transaction
     case account
-    public func urlRegexGetOBATResource() -> String {
+    public func urlRegexGetResource() -> String {
         switch self {
         case .transaction:
             // GET /accounts/{AccountId}/statements/{StatementId}/transactions
@@ -41,7 +42,7 @@ public enum OBATResourceType: CaseIterable {
     }
 }
 
-public protocol OBATResourceProcesingBlock {
+public protocol AccountTransactionResourceProcesingBlock {
     associatedtype InputType
     associatedtype OutputType
     static func executeInner<T1: OBATApiReadResourceProtocol, T2: OBATLocalResourceProtocol>(
@@ -51,10 +52,10 @@ public protocol OBATResourceProcesingBlock {
     ) throws -> OutputType where T2.OBATApiResourceType == T1.OBATApiReadResourceDataType.OBATApiResourceType
 }
 
-extension OBATResourceProcesingBlock {
+extension AccountTransactionResourceProcesingBlock {
     public static func execute(
-        _ apiVersion: OBAccountTransactionAPIVersion,
-        _ resourceType: OBATResourceType,
+        _ apiVersion: AccountTransactionApiVersion,
+        _ resourceType: AccountTransactionResourceVariety,
         _ input: InputType
     ) throws -> OutputType {
         switch apiVersion {
@@ -68,7 +69,7 @@ extension OBATResourceProcesingBlock {
     }
     static func executeIntermediate<T: OBATApiReadResourceTypesProtocol>(
         apiTypesType: T.Type,
-        resourceType: OBATResourceType,
+        resourceType: AccountTransactionResourceVariety,
         input: InputType
     ) throws -> OutputType {
         switch resourceType {
@@ -82,6 +83,58 @@ extension OBATResourceProcesingBlock {
             return try Self.executeInner(
                 type1: T.OBATApiReadAccountType.self,
                 type2: OBATLocalAccount.self,
+                input: input
+            )
+        }
+    }
+}
+
+public enum AccountTransactionRequestObjectVariety: CaseIterable {
+    case accountAccessConsent
+    public func urlRegexPostObject() -> String {
+        switch self {
+        case .accountAccessConsent:
+            // POST /account-access-consents
+            return #"^/account-access-consents$"#
+        }
+    }
+}
+
+public protocol AccountTransactionRequestOBObjectProcesingBlock {
+    associatedtype InputType
+    associatedtype OutputType
+    static func executeInner<T1, T2: AccountTransactionRequestObjectLocalProtocol>(
+        type1: T1.Type,
+        type2: T2.Type,
+        input: InputType
+    ) throws -> OutputType where T2.AccountTransactionRequestObjectApi == T1
+}
+
+extension AccountTransactionRequestOBObjectProcesingBlock {
+    public static func execute(
+        _ apiVersion: AccountTransactionApiVersion,
+        _ requestOBObjectVariety: AccountTransactionRequestObjectVariety,
+        _ input: InputType
+    ) throws -> OutputType {
+        switch apiVersion {
+        case .V3p0p0:
+            return try executeIntermediate(apiTypesType: AccountTransactionRequestOBObjectApiV3p0Types.self, requestOBObjectVariety: requestOBObjectVariety, input: input)
+        case .V3p1p1:
+            return try executeIntermediate(apiTypesType: AccountTransactionRequestOBObjectApiV3p1p1Types.self, requestOBObjectVariety: requestOBObjectVariety, input: input)
+        case .V3p1p2:
+            return try executeIntermediate(apiTypesType: AccountTransactionRequestOBObjectApiV3p1p2Types.self, requestOBObjectVariety: requestOBObjectVariety, input: input)
+        }
+    }
+    static func executeIntermediate<T: AccountTransactionRequestObjectApiTypesProtocol>(
+        apiTypesType: T.Type,
+        requestOBObjectVariety: AccountTransactionRequestObjectVariety,
+        input: InputType
+    ) throws -> OutputType {
+        switch requestOBObjectVariety {
+        case .accountAccessConsent:
+            return try Self.executeInner(
+                type1: T.OBReadConsentApiType.self,
+                type2: OBReadConsentLocal.self,
                 input: input
             )
         }

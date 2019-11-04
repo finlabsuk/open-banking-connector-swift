@@ -71,6 +71,10 @@ public protocol OBATApiReadResourceTypesProtocol {
     associatedtype OBATApiReadAccountType: OBATApiReadAccountProtocol
 }
 
+public protocol AccountTransactionRequestObjectApiTypesProtocol {
+    associatedtype OBReadConsentApiType: OBReadConsentApiProtocol
+}
+
 // MARK:- Direct debit type protocols
 
 public protocol OBATApiReadDirectDebitDataProtocol: OBATApiReadResourceDataProtocol {

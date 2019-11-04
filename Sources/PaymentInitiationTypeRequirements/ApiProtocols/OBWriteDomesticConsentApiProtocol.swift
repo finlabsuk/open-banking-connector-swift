@@ -11,9 +11,19 @@
 // ********************************************************************************
 
 import Foundation
-import BaseServices
+import SwiftJWT
 
-public protocol OBWriteDomesticConsentProtocol: PaymentInitiationWriteResourceProtocol where PaymentInitiationWriteResourceDataType: OBWriteDomesticConsentDataProtocol, OBRiskApi: OBRiskApiProtocol { }
+public protocol OBWritePaymentConsentApiProtocol: Claims {
+    associatedtype OBWritePaymentConsentData
+    associatedtype OBRiskApi: OBRiskApiProtocol
+    associatedtype ResponseApi: OBWritePaymentConsentResponseApiProtocol
+    init(
+        data: OBWritePaymentConsentData,
+        risk: OBRiskApi
+    )
+}
+
+public protocol OBWriteDomesticConsentApiProtocol: OBWritePaymentConsentApiProtocol where OBWritePaymentConsentData: OBWriteDomesticConsentDataProtocol { }
 
 public protocol OBWriteDomesticConsentDataProtocol {
     associatedtype OBWriteDomesticDataInitiationType: OBWriteDomesticDataInitiationProtocol

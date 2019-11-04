@@ -10,7 +10,7 @@
 //
 // ********************************************************************************
 
-struct AccountAccessConsentResponse: Codable {
+struct PostConsentResponse: Codable {
     let authURL: String
-    let accountAccessConsentId: String
+    let consentId: String
 }

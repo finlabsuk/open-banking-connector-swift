@@ -19,7 +19,9 @@ import BaseServices
 let storedItemConformingTypes: [String: StoredItem.Type] = [
     OBClientProfile.typeName:                       OBClientProfile.self,
     SoftwareStatementProfile.typeName:              SoftwareStatementProfile.self,
-    AccountAccessConsent.typeName:                  AccountAccessConsent.self
+    AccountTransactionConsent.typeName:             AccountTransactionConsent.self,
+    PaymentInitiationDomesticConsent.typeName:      PaymentInitiationDomesticConsent.self,
+    PaymentInitiationDomestic.typeName:             PaymentInitiationDomestic.self
 ]
 
 extension StoredItem {
@@ -68,7 +70,7 @@ extension StoredItem {
             .column("issuerURL", type: .text)
             .column("obClientId", type: .text)
             .column("userId", type: .text)
-            .column("authState", type: .text)
+            .column("state", type: .text)
             .column("json", type: .text, .notNull)
             .run()
             .flatMapError({error in
@@ -77,11 +79,48 @@ extension StoredItem {
             })
     }
     
+    static func load(
+        id: String?,
+        state: String?,
+        on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
+    ) -> EventLoopFuture<[Self]> {
+        
+        var builder = sm.db.currentValue!.select()
+            .column(SQLRaw("json"))
+            .from(self.tableName)
+        if let id = id {
+            builder = builder.where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+        }
+        if let state = state {
+            builder = builder.where(SQLColumn(SQLRaw("state")), .equal, SQLBind(state))
+        }
+        let futureOnDBEventLoop = builder.all()
+        return futureOnDBEventLoop
+            .hop(to: eventLoop)
+            .flatMapThrowing({ rowArray -> [Self] in
+                var resultArray = [Self]()
+                for row in rowArray {
+                    let dataString: String = try row.decode(column: "json", as: String.self)
+                    let result: Self = try sm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
+                        Self.self,
+                        from: Data(dataString.utf8)
+                    )
+                    resultArray.append(result)
+                }
+                return resultArray
+            })
+            .flatMapError({error in
+                print(error)
+                fatalError()
+            })
+        
+    }
+    
     func insert() -> EventLoopFuture<Void> {
         print(tableNameTmp)
         return sm.db.currentValue!.insert(into: tableNameTmp)
-            .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "authState", "json")
-            .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId), SQLBind(authState),
+            .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "state", "json")
+            .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId), SQLBind(state),
                     SQLBind(self.encodeString()))
             .run()
             .flatMapError({error in
@@ -97,7 +136,7 @@ extension StoredItem {
             .set("issuerURL", to: issuerURL)
             .set("obClientId", to: obClientId)
             .set("userId", to: userId)
-            .set("authState", to: authState)
+            .set("state", to: state)
             .set("json", to: self.encodeString())
             .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
             .run()

@@ -16,6 +16,7 @@ import SwiftJWT
 import AsyncHTTPClient
 import NIOFoundationCompat
 import AccountTransactionTypes
+import PaymentInitiationTypes
 
 struct OBClientRegistrationClaimsOverrides: Codable {
     var iss: String?
@@ -121,8 +122,10 @@ struct OBClientRegistrationClaims: Claims, Equatable {
         softwareStatementId: String,
         issuerURL: String,
         xFapiFinancialId: String?,
-        obAccountAndTransactionAPIVersion: OBAccountTransactionAPIVersion,
-        obAccountTransactionBaseURL: String,
+        accountTransactionAPIVersion: AccountTransactionApiVersion,
+        accountTransactionAPIBaseURL: String,
+        paymentInitiationAPIVersion: PaymentInitiationApiVersion,
+        paymentInitiationAPIBaseURL: String,
         httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?,
         obClientRegistrationResponseOverrides: OBClientRegistrationResponseOverrides?,
         obAccountTransactionAPISettingsOverrides: OBAccountTransactionAPISettingsOverrides?,
@@ -212,10 +215,14 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                     client_id_issued_at: response.client_id_issued_at,
                     client_secret_expires_at: response.client_secret_expires_at
                 )
-                let obAccountTransactionAPISettings = OBAccountTransactionAPISettings(
-                    apiVersion: obAccountAndTransactionAPIVersion,
-                    obBaseURL: obAccountTransactionBaseURL,
+                let accountTransactionAPISettings = AccountTransactionApiSettings(
+                    apiVersion: accountTransactionAPIVersion,
+                    obBaseURL: accountTransactionAPIBaseURL,
                     overrides: obAccountTransactionAPISettingsOverrides
+                )
+                let paymentInitiationAPISettings = PaymentInitiationApiSettings(
+                    apiVersion: paymentInitiationAPIVersion,
+                    obBaseURL: paymentInitiationAPIBaseURL
                 )
                 return OBClientProfile(
                     softwareStatementProfileId: softwareStatementProfileId,
@@ -225,7 +232,8 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                     httpClientMTLSConfiguration: httpClientMTLSConfiguration,
                     registrationClaims: self,
                     registrationData: registrationData,
-                    obAccountTransactionAPISettings: obAccountTransactionAPISettings
+                    accountTransactionAPISettings: accountTransactionAPISettings,
+                    paymentInitiationAPISettings: paymentInitiationAPISettings
                 )
             })
             

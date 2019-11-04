@@ -35,7 +35,7 @@ func routeHandlerAuth(
             buffer.writeBuffer(&buf)
         case .end:
             
-            var accountAccessConsent: AccountAccessConsent!
+            var consent: ConsentProtocol!
             
             // Validate body data
             let bufString = buffer.readString(length: buffer.readableBytes)!
@@ -44,27 +44,32 @@ func routeHandlerAuth(
             context.eventLoop.makeSucceededFuture(())
                 
                 // Load relevant consent
-                .flatMap({ () -> EventLoopFuture<[AccountAccessConsent]> in
-                    return AccountAccessConsent.load(
+                .flatMap({ () -> EventLoopFuture<([AccountTransactionConsent],[PaymentInitiationDomesticConsent])> in
+                    return AccountTransactionConsent.load(
                         id: nil,
-                        authState: authData.state
-                    )
+                        state: authData.state
+                    ).and(PaymentInitiationDomesticConsent.load(
+                        id: nil,
+                        state: authData.state
+                    ))
                 })
                 
                 // Post authorisation code grant request
-                .flatMap({accountAccessConsentArray -> EventLoopFuture<OBTokenEndpointResponse> in
-                    guard accountAccessConsentArray.count == 1 else {
+                .flatMap({(accountAccessConsentArray, paymentInitiationDomesticConsentArray) -> EventLoopFuture<OBTokenEndpointResponse> in
+                    let consentArray: [ConsentProtocol] = accountAccessConsentArray + paymentInitiationDomesticConsentArray
+                    
+                    guard consentArray.count == 1 else {
                         fatalError()
                     }
-                    accountAccessConsent = accountAccessConsentArray[0]
-                    return accountAccessConsent.httpPostAuthCodeGrant(code: authData.code)
+                    consent = consentArray[0]
+                    return consent.httpPostAuthCodeGrant(code: authData.code)
                 })
                 
                 // Update consent with response
                 .flatMap({ obTokenEndpointResponse -> EventLoopFuture<Void> in
                     print(obTokenEndpointResponse)
-                    accountAccessConsent.obTokenEndpointResponse = obTokenEndpointResponse
-                    return accountAccessConsent.update()
+                    consent.obTokenEndpointResponse = obTokenEndpointResponse
+                    return consent.update()
                 })
                 
                 

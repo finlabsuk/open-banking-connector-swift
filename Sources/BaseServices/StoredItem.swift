@@ -53,8 +53,8 @@ public protocol StoredItem: Codable {
     /// "User identity"
     var userId: String { get }
     
-    /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
-    var authState: String { get }
+    /// State variable; relevant for consents that need authorisation and payments
+    var state: String { get }
     
     /// Data object creation date
     var created: Date { get }

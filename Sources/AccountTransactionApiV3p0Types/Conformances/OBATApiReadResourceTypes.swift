@@ -16,3 +16,8 @@ public class OBATV3p0ReadResourceTypes: OBATApiReadResourceTypesProtocol {
     public typealias OBATApiReadTransactionType = OBReadTransactionAlias
     public typealias OBATApiReadAccountType = OBApiReadAccountAlias
 }
+
+public class AccountTransactionRequestOBObjectApiV3p0Types: AccountTransactionRequestObjectApiTypesProtocol {
+    public typealias OBReadConsentApiType = OBReadConsentApi
+    
+}

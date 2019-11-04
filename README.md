@@ -1,6 +1,6 @@
 ![Alt text](./docs/OBC_Banner.png)
 
-*[NB: this software is under active and rapid devleopment. Please contact Mark (main author) regarding feature status or to see a demo.]*
+*[NB: Waiting to resolve this upstream issue before furhter updates: https://github.com/IBM-Swift/Swift-JWT/issues/80 .]*
 # Overview
 
 Open Banking Connector is an interface layer that handles connections to UK Open Banking APIs. It is desiged for use as:

@@ -21,7 +21,7 @@ extension OBATApiReadResourceProtocol {
     
     static func httpGet(
         obClient: OBClientProfile,
-        accountAccessConsent: AccountAccessConsent,
+        accountAccessConsent: AccountTransactionConsent,
         endpointPath: String,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
     ) -> EventLoopFuture<Self> {
@@ -31,7 +31,7 @@ extension OBATApiReadResourceProtocol {
             // Post claims
             .flatMap({ () -> EventLoopFuture<HTTPClient.Response> in
                 
-                let url = obClient.obAccountTransactionAPISettings.obBaseURL + endpointPath
+                let url = obClient.accountTransactionAPISettings.obBaseURL + endpointPath
                 let xFapiFinancialId = obClient.xFapiFinancialId
                 guard let accessToken = accountAccessConsent.obTokenEndpointResponse?.access_token else {
                     fatalError()

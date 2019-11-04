@@ -20,6 +20,7 @@ let package = Package(
         //.package(path: "../swift-nio"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0"),
         .package(url: "https://github.com/IBM-Swift/Swift-JWT.git", from: "3.5.0"),
+        //.package(path: "../Swift-JWT"),
         .package(url: "https://github.com/vapor/sqlite-kit.git", from: "4.0.0-alpha.1.1"),
         //.package(path: "../sqlite-kit"),
         .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-alpha.1.3"),
@@ -33,6 +34,7 @@ let package = Package(
         .target(
             name: "BaseServices",
             dependencies: [
+                "SwiftJWT"
         ]),
         
         // UK Open Banking Account and Transaction Types
@@ -76,7 +78,7 @@ let package = Package(
         .target(
             name: "PaymentInitiationTypeRequirements",
             dependencies: [
-                "BaseServices"
+                "SwiftJWT"
         ]),
         .target(
             name: "PaymentInitiationApiV3p1p1Types",

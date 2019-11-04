@@ -10,16 +10,9 @@
 //
 // ********************************************************************************
 
-import Foundation
-import BaseServices
+import PaymentInitiationTypeRequirements
 
-public protocol OBATLocalResourceProtocol: StoredItem {
-    associatedtype OBATApiResourceType: OBATApiResourceProtocol
-    init(
-        softwareStatementProfileId: String,
-        issuerURL: String,
-        obClientId: String,
-        userId: String,
-        aspspData: OBATApiResourceType
-    )
+public class PaymentInitiationRequestObjectApiV3p1p1Types: PaymentInitiationRequestObjectApiTypesProtocol {
+    public typealias OBWriteDomesticConsentApiType = OBWriteDomesticConsentApi
+    public typealias OBWriteDomesticApiType = OBWriteDomesticApi
 }

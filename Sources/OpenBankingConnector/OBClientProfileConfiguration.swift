@@ -11,6 +11,7 @@
 // ********************************************************************************
 
 import AccountTransactionTypes
+import PaymentInitiationTypes
 
 struct OBClientProfileConfiguration: Codable {
     
@@ -18,9 +19,11 @@ struct OBClientProfileConfiguration: Codable {
     let softwareStatementProfileID: String
     let issuerURL: String
     let xFapiFinancialID: String
-    let obAccountAndTransactionBaseURL: String
-    let obAccountAndTransactionAPIVersion: OBAccountTransactionAPIVersion
-
+    let accountTransactionAPIVersion: AccountTransactionApiVersion
+    let accountTransactionAPIBaseURL: String
+    let paymentInitiationAPIVersion: PaymentInitiationApiVersion
+    let paymentInitiationAPIBaseURL: String
+    
     // Optional parameters
     let openIDConfigurationOverrides: OpenIDConfigurationOverrides?
     let httpClientMTLSConfigurationOverrides: HTTPClientMTLSConfigurationOverrides?

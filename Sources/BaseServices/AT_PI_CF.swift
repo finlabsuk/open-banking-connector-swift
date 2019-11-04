@@ -10,14 +10,18 @@
 //
 // ********************************************************************************
 
-import AccountTransactionTypeRequirements
+import Foundation
+import SwiftJWT
 
-public class OBATV3p1p2ReadResourceTypes: OBATApiReadResourceTypesProtocol {
-    public typealias OBATApiReadTransactionType = OBReadTransactionAlias
-    public typealias OBATApiReadAccountType = OBApiReadAccountAlias
+public protocol tmp1: Codable {
+    var consentId: String { get }
 }
 
-public class AccountTransactionRequestOBObjectApiV3p1p2Types: AccountTransactionRequestObjectApiTypesProtocol {
-    public typealias OBReadConsentApiType = OBReadConsentApi
-    
+public protocol tmp2: Codable {
+    associatedtype TT1: tmp1
+        var data: TT1 { get }
+}
+
+public protocol AT_PI_CF_PostRequestApiProtocol: Claims {
+    associatedtype ResponseApi: tmp2
 }

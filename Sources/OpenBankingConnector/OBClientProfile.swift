@@ -68,7 +68,7 @@ struct OBClientProfile: StoredItem {
     var userId: String = ""
 
     /// State variable supplied to auth endpoint (used to process redirect); only relevant for consents that need authorisation
-    var authState: String = ""
+    var state: String = ""
     
     // Timestamp for object creation as best we can determine
     let created: Date = Date()
@@ -94,9 +94,12 @@ struct OBClientProfile: StoredItem {
     /// MTLS configuration
     let httpClientMTLSConfiguration: HTTPClientMTLSConfiguration
     
-    /// Settings to use for interactions with OB Account and Transaction API
-    let obAccountTransactionAPISettings: OBAccountTransactionAPISettings
-    
+    /// Settings to use for interactions with Open Banking Account and Transaction API
+    let accountTransactionAPISettings: AccountTransactionApiSettings
+
+    /// Settings to use for interactions with Open Banking Payment Initiation API
+    let paymentInitiationAPISettings: PaymentInitiationApiSettings
+
     init( // TODO: Remove after Swift 5.1
         softwareStatementProfileId: String,
         issuerURL: String,
@@ -105,7 +108,8 @@ struct OBClientProfile: StoredItem {
         httpClientMTLSConfiguration: HTTPClientMTLSConfiguration,
         registrationClaims: OBClientRegistrationClaims,
         registrationData: OBClientRegistrationData,
-        obAccountTransactionAPISettings: OBAccountTransactionAPISettings
+        accountTransactionAPISettings: AccountTransactionApiSettings,
+        paymentInitiationAPISettings: PaymentInitiationApiSettings
     ) {
         self.softwareStatementProfileId = softwareStatementProfileId
         self.issuerURL = issuerURL
@@ -114,7 +118,8 @@ struct OBClientProfile: StoredItem {
         self.httpClientMTLSConfiguration = httpClientMTLSConfiguration
         self.registrationClaims = registrationClaims
         self.registrationData = registrationData
-        self.obAccountTransactionAPISettings = obAccountTransactionAPISettings
+        self.accountTransactionAPISettings = accountTransactionAPISettings
+        self.paymentInitiationAPISettings = paymentInitiationAPISettings
     }
 
     static func load(

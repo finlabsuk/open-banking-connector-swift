@@ -10,14 +10,11 @@
 //
 // ********************************************************************************
 
-import AccountTransactionTypeRequirements
+import Foundation
 
-public class OBATV3p1p2ReadResourceTypes: OBATApiReadResourceTypesProtocol {
-    public typealias OBATApiReadTransactionType = OBReadTransactionAlias
-    public typealias OBATApiReadAccountType = OBApiReadAccountAlias
-}
-
-public class AccountTransactionRequestOBObjectApiV3p1p2Types: AccountTransactionRequestObjectApiTypesProtocol {
-    public typealias OBReadConsentApiType = OBReadConsentApi
-    
+public protocol OBWritePaymentConsentLocalProtocol: Codable {
+    associatedtype OBWritePaymentConsentApi: OBWritePaymentConsentApiProtocol
+    associatedtype OBWritePaymentApi: OBWritePaymentApiProtocol
+    func obWritePaymentConsentApi() -> OBWritePaymentConsentApi
+    func obWritePaymentApi(consentId: String) -> OBWritePaymentApi
 }
