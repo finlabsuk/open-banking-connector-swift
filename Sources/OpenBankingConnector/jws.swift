@@ -29,21 +29,21 @@ func genJws<ClaimsType: Claims>(
                     kid: softwareStatement.obSigningKID
                 )
             } else {
-                header = Header(
-                    // additional to default alg
-                    typ: "JOSE",
-                    kid: softwareStatement.obSigningKID,
-                    crit: ["b64", "http://openbanking.org.uk/iat", "http://openbanking.org.uk/iss", "http://openbanking.org.uk/tan"],
-                    b64: false,
-                    obIat: Date(),
-                    obIss: "\(softwareStatement.orgId)/\(softwareStatement.id)",
-                    obTan: "openbanking.org.uk"
-                )
 //                header = Header(
 //                    // additional to default alg
 //                    typ: "JOSE",
-//                    kid: softwareStatement.obSigningKID
+//                    kid: softwareStatement.obSigningKID,
+//                    crit: ["b64", "http://openbanking.org.uk/iat", "http://openbanking.org.uk/iss", "http://openbanking.org.uk/tan"],
+//                    b64: false,
+//                    obIat: Date(),
+//                    obIss: "\(softwareStatement.orgId)/\(softwareStatement.id)",
+//                    obTan: "openbanking.org.uk"
 //                )
+                header = Header(
+                    // additional to default alg
+                    typ: "JOSE",
+                    kid: softwareStatement.obSigningKID
+                )
             }
             var newJwt = JWT(header: header, claims: claims)
             let jwtSigner = JWTSigner.ps256(privateKey: Data(softwareStatement.obSigningKey.utf8))
