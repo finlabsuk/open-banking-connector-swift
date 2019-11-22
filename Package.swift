@@ -71,7 +71,7 @@ let package = Package(
                 "AccountTransactionApiV3p0Types",
                 "AccountTransactionApiV3p1p1Types",
                 "AccountTransactionApiV3p1p2Types",
-                "AccountTransactionLocalTypes"
+                "AccountTransactionLocalTypes" 
         ]),
         
         // UK Open Banking Payment Initiation Types

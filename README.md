@@ -24,4 +24,4 @@ The software is written using Apple's new non-blocking, multi-threaded, high-per
 
 To use this software, you must at least be a member of the UK Open Banking Directory sandbox and able to generate software statements.
 
-We will add two additional documents here covering (a) installation and (b) the API.
+We will add two additional documents here covering (a) installation and (b) the [API](https://github.com/finlabsuk/open-banking-connector/blob/master/docs/api.md).

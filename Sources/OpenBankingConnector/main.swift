@@ -578,7 +578,7 @@ private final class HTTPHandler: ChannelInboundHandler {
             } else if let path = request.uri.chopPrefix("/register") {
                 if
                     path == "",
-                    httpMethod == .POST
+                    httpMethod == .POST 
                 {
                     self.buffer.clear()
                     self.handler = { endpointHandlerPostRegister(
