@@ -20,4 +20,4 @@ For Open Banking Connector, the block architecture is based on the following ide
 
 THe following diagram show the blocks and dependencies of Open Banking Connector.
 
-![Alt text](./Block-structure.png)
+![Alt text](./block-structure.png)
