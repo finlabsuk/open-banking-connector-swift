@@ -11,8 +11,14 @@
 // ********************************************************************************
 
 import Foundation
-import BaseServices
 import PaymentInitiationTypeRequirements
+
+// Note: Local Types are spec-version-independent but in order to support conversion to API Types
+// they are often generic with respect to the target spec-version-specific API Types
+// for which conversions are supported (or to allow
+// their nested descendents to support such conversions).
+// Notwithstanding this, no data field within a Local Type should have
+// any such generic dependency. This ensures the JSON serialisation is spec-version independent.
 
 public struct OBWriteDomesticConsentLocal<
     OBWritePaymentConsentApi: OBWriteDomesticConsentApiProtocol,
@@ -103,7 +109,7 @@ public struct OBWriteDomesticDataInitiationLocal<OBWriteDomesticDataInitiationAp
     public var remittanceInformation: OBWriteDomesticDataInitiationRemittanceInformationLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationRemittanceInformationType>?
     //public var supplementaryData: OBSupplementaryData1?
 
-    public init(instructionIdentification: String, endToEndIdentification: String, localInstrument: String /* OBExternalLocalInstrument1Code?*/, instructedAmount: OBWriteDomesticDataInitiationInstructedAmountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationInstructedAmountType>, debtorAccount: OBWriteDomesticDataInitiationDebtorAccountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationDebtorAccountType>?, creditorAccount: OBWriteDomesticDataInitiationCreditorAccountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationCreditorAccountType>, /*creditorPostalAddress: OBPostalAddress6?,*/ remittanceInformation: OBWriteDomesticDataInitiationRemittanceInformationLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationRemittanceInformationType>? /*supplementaryData: OBSupplementaryData1?*/) {
+    public init(instructionIdentification: String, endToEndIdentification: String, localInstrument: String? /* OBExternalLocalInstrument1Code?*/, instructedAmount: OBWriteDomesticDataInitiationInstructedAmountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationInstructedAmountType>, debtorAccount: OBWriteDomesticDataInitiationDebtorAccountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationDebtorAccountType>?, creditorAccount: OBWriteDomesticDataInitiationCreditorAccountLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationCreditorAccountType>, /*creditorPostalAddress: OBPostalAddress6?,*/ remittanceInformation: OBWriteDomesticDataInitiationRemittanceInformationLocal<OBWriteDomesticDataInitiationApi.OBWriteDomesticDataInitiationRemittanceInformationType>? /*supplementaryData: OBSupplementaryData1?*/) {
         self.instructionIdentification = instructionIdentification
         self.endToEndIdentification = endToEndIdentification
         self.localInstrument = localInstrument
@@ -140,6 +146,20 @@ public struct OBWriteDomesticDataInitiationLocal<OBWriteDomesticDataInitiationAp
     }
     
 }
+public extension OBWriteDomesticDataInitiationProtocol {
+    func obWriteDomesticDataInitiationLocal() -> OBWriteDomesticDataInitiationLocal<Self> {
+        OBWriteDomesticDataInitiationLocal.init(
+            instructionIdentification: instructionIdentification,
+            endToEndIdentification: endToEndIdentification,
+            localInstrument: localInstrument,
+            instructedAmount: instructedAmount.obWriteDomesticDataInitiationInstructedAmountLocal(),
+            debtorAccount: debtorAccount?.obWriteDomesticDataInitiationDebtorAccountLocal(),
+            creditorAccount: creditorAccount.obWriteDomesticDataInitiationCreditorAccountLocal(),
+            remittanceInformation: remittanceInformation?.obWriteDomesticDataInitiationRemittanceInformationLocal()
+        )
+    }
+}
+
 
 public struct OBWriteDomesticDataInitiationInstructedAmountLocal<OBWriteDomesticDataInitiationInstructedAmountType: OBWriteDomesticDataInitiationInstructedAmountProtocol>: Codable {
 
@@ -161,6 +181,15 @@ public struct OBWriteDomesticDataInitiationInstructedAmountLocal<OBWriteDomestic
     }
 
 }
+public extension OBWriteDomesticDataInitiationInstructedAmountProtocol {
+    func obWriteDomesticDataInitiationInstructedAmountLocal() -> OBWriteDomesticDataInitiationInstructedAmountLocal<Self> {
+        OBWriteDomesticDataInitiationInstructedAmountLocal.init(
+            amount: amount,
+            currency: currency
+        )
+    }
+}
+
 
 public struct OBWriteDomesticDataInitiationDebtorAccountLocal<OBWriteDomesticDataInitiationDebtorAccountType: OBWriteDomesticDataInitiationDebtorAccountProtocol>: Codable {
 
@@ -188,6 +217,15 @@ public struct OBWriteDomesticDataInitiationDebtorAccountLocal<OBWriteDomesticDat
         OBWriteDomesticDataInitiationDebtorAccountType.init(schemeName: schemeName, identification: identification, name: name)
     }
 
+}
+public extension OBWriteDomesticDataInitiationDebtorAccountProtocol {
+    func obWriteDomesticDataInitiationDebtorAccountLocal() -> OBWriteDomesticDataInitiationDebtorAccountLocal<Self> {
+        OBWriteDomesticDataInitiationDebtorAccountLocal.init(
+            schemeName: schemeName,
+            identification: identification,
+            name: name
+        )
+    }
 }
 
 public struct OBWriteDomesticDataInitiationCreditorAccountLocal<OBWriteDomesticDataInitiationCreditorAccountType: OBWriteDomesticDataInitiationCreditorAccountProtocol>: Codable {
@@ -222,6 +260,15 @@ public struct OBWriteDomesticDataInitiationCreditorAccountLocal<OBWriteDomesticD
     }
 
 }
+public extension OBWriteDomesticDataInitiationCreditorAccountProtocol {
+    func obWriteDomesticDataInitiationCreditorAccountLocal() -> OBWriteDomesticDataInitiationCreditorAccountLocal<Self> {
+        OBWriteDomesticDataInitiationCreditorAccountLocal.init(
+            schemeName: schemeName,
+            identification: identification,
+            name: name
+        )
+    }
+}
 
 public struct OBWriteDomesticDataInitiationRemittanceInformationLocal<OBWriteDomesticDataInitiationRemittanceInformationType: OBWriteDomesticDataInitiationRemittanceInformationProtocol>: Codable {
 
@@ -244,6 +291,14 @@ public struct OBWriteDomesticDataInitiationRemittanceInformationLocal<OBWriteDom
         OBWriteDomesticDataInitiationRemittanceInformationType.init(unstructured: unstructured, reference: reference)
     }
 
+}
+public extension OBWriteDomesticDataInitiationRemittanceInformationProtocol {
+    func obWriteDomesticDataInitiationRemittanceInformationLocal() -> OBWriteDomesticDataInitiationRemittanceInformationLocal<Self> {
+        OBWriteDomesticDataInitiationRemittanceInformationLocal.init(
+            unstructured: unstructured,
+            reference: reference
+        )
+    }
 }
 
 public struct OBWriteDomesticConsentDataAuthorisationLocal<OBWriteDomesticConsentDataAuthorisationType: OBWriteDomesticConsentDataAuthorisationProtocol>: Codable {
@@ -268,6 +323,15 @@ public struct OBWriteDomesticConsentDataAuthorisationLocal<OBWriteDomesticConsen
     }
 
 }
+public extension OBWriteDomesticConsentDataAuthorisationProtocol {
+    func obWriteDomesticConsentDataAuthorisationLocal() -> OBWriteDomesticConsentDataAuthorisationLocal<Self> {
+        OBWriteDomesticConsentDataAuthorisationLocal.init(
+            authorisationType: authorisationType,
+            completionDateTime: completionDateTime
+        )
+    }
+}
+
 
 public struct OBWriteDomesticConsentDataSCASupportDataLocal<OBWriteDomesticConsentDataSCASupportDataType>: Codable {
 
@@ -303,8 +367,6 @@ public struct OBWriteDomesticConsentDataSCASupportDataLocal<OBWriteDomesticConse
         case appliedAuthenticationApproach = "AppliedAuthenticationApproach"
         case referencePaymentOrderId = "ReferencePaymentOrderId"
     }
-    
-
 }
 
 // This extension is ugly but necessary since Swift does not support OR operator in generic WHERE clause to constrain OBWriteDomesticConsentDataSCASupportDataType
@@ -322,6 +384,15 @@ extension OBWriteDomesticConsentDataSCASupportDataLocal where OBWriteDomesticCon
             requestedSCAExemptionType: requestedSCAExemptionTypeTmp,
             appliedAuthenticationApproach: appliedAuthenticationApproachTmp,
             referencePaymentOrderId: referencePaymentOrderId)
+    }
+}
+public extension OBWriteDomesticConsentDataSCASupportDataProtocol {
+    func obWriteDomesticConsentDataSCASupportDataLocal() -> OBWriteDomesticConsentDataSCASupportDataLocal<Self> {
+        OBWriteDomesticConsentDataSCASupportDataLocal.init(
+            requestedSCAExemptionType: OBWriteDomesticConsentDataSCASupportDataLocal.RequestedSCAExemptionType.init(rawValue: requestedSCAExemptionType!.rawValue)!,
+            appliedAuthenticationApproach: OBWriteDomesticConsentDataSCASupportDataLocal.AppliedAuthenticationApproach.init(rawValue: appliedAuthenticationApproach!.rawValue)!,
+            referencePaymentOrderId: referencePaymentOrderId
+        )
     }
 }
 extension OBWriteDomesticConsentDataSCASupportDataLocal where OBWriteDomesticConsentDataSCASupportDataType == Void {

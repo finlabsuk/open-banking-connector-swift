@@ -15,10 +15,30 @@ import Foundation
 public protocol OBRiskApiProtocol: Codable {
     associatedtype OBRiskDeliveryAddress: OBRiskDeliveryAddressProtocol
     associatedtype PaymentContextCode: RawRepresentable, Codable where PaymentContextCode.RawValue == String
+    
+    /** Specifies the payment context */
+    var paymentContextCode: PaymentContextCode? {get set}
+    /** Category code conform to ISO 18245, related to the type of services or goods the merchant provides for the transaction. */
+    var merchantCategoryCode: String? {get set}
+    /** The unique customer identifier of the PSU with the merchant. */
+    var merchantCustomerIdentification: String? {get set}
+    var deliveryAddress: OBRiskDeliveryAddress? {get set}
+    
     init(paymentContextCode: PaymentContextCode?, merchantCategoryCode: String?, merchantCustomerIdentification: String?, deliveryAddress: OBRiskDeliveryAddress?)
 }
 
+/** Information that locates and identifies a specific address, as defined by postal services or in free format text. */
 public protocol OBRiskDeliveryAddressProtocol: Codable {
+    
+    var addressLine: [String]? {get set}
+    var streetName: String? {get set} // StreetName?
+    var buildingNumber: String? {get set} // BuildingNumber?
+    var postCode: String? {get set} // PostCode?
+    var townName: String {get set} // TownName
+    var countrySubDivision: [String]? {get set}
+    /** Nation with its own government, occupying a particular territory. */
+    var country: String {get set}
+    
     init(
         addressLine: [String]?,
         streetName: String?, //StreetName?,
