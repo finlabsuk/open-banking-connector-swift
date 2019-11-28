@@ -8,7 +8,7 @@ Note that bcause Open Banking redirects get sent to a TLS endpoint on a pre-regi
 
 ## Installation Instructions
 
-### Mac
+### MacOS
 
 Open Banking Connector can be installed on a Mac for local running and debugging. 
 
@@ -83,6 +83,18 @@ sudo apt-get -y install libssl-dev # dependency from https://github.com/IBM-Swif
 sudo apt-get install -y libsqlite3-dev # dependency from https://github.com/vapor/sqlite-nio
 ulimit -n 65536 # may be necessary if linker reports "/usr/bin/ld.gold: fatal error: out of file descriptors and couldn't close any"
 swift build
-swift run
 ```
 
+## Usage Instructions
+
+### Install Open Banking Root and Issuing Certificates
+
+Download this [file](https://openbanking.atlassian.net/wiki/download/attachments/313918598/ca.pem?version=1&modificationDate=1531913034543&cacheVersion=1&api=v2) and place in the root directory of Open Banking Connector.
+
+### Run Open Banking Connector
+
+```bash
+# Sample instructions
+# Run Open Banking Connector and listen on port 3000
+swift run OpenBankingConnector ::1 3000 .
+```

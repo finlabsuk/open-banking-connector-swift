@@ -730,6 +730,7 @@ try! sm.createTables(
 
 // Create HTTP client manager
 let hcm = HTTPClientManager(
+    certFile: projectRootPath + "/ca.pem",
     httpClientEventLoop: eventLoopGroup.next()
 )
 

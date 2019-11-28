@@ -104,11 +104,14 @@ extension HTTPClientMTLSConfiguration {
 // Read-only "dictionary" which returns HTTPClient with correct MTLS based on software statement ID
 final class HttpClientsMTLS { // class rather than struct to allow mutable capture of self in callbacks
     
+    let certFile: String
     let httpClientEventLoop: EventLoop
     
     init(
+        certFile: String,
         httpClientEventLoop: EventLoop
     ) {
+        self.certFile = certFile
         self.httpClientEventLoop = httpClientEventLoop
     }
     
@@ -127,7 +130,7 @@ final class HttpClientsMTLS { // class rather than struct to allow mutable captu
                 )
                 
                 var tlsConfiguration = TLSConfiguration.forClient()
-                tlsConfiguration.trustRoots = .file("/Users/mark/GitHub/api/statements/obca.pem") // TODO: insert path to OB certificate
+                tlsConfiguration.trustRoots = .file(self.certFile)
                 tlsConfiguration.privateKey = .privateKey(transportKey)
                 tlsConfiguration.certificateChain = [.certificate(transportCertificates[0])]
                 tlsConfiguration.certificateVerification = httpClientMTLSConfiguration.tlsCertificateVerification
@@ -183,6 +186,7 @@ final class HTTPClientManager {
     let clientsMTLS: HttpClientsMTLS
     
     init(
+        certFile: String,
         httpClientEventLoop: EventLoop
     ) {
         jsonEncoderDateFormatISO8601WithSeconds.dateEncodingStrategy = .iso8601
@@ -209,7 +213,10 @@ final class HTTPClientManager {
         })
         jsonDecoderDateFormatSecondsSince1970.dateDecodingStrategy = .secondsSince1970
 
-        clientsMTLS = HttpClientsMTLS(httpClientEventLoop: httpClientEventLoop)
+        clientsMTLS = HttpClientsMTLS(
+            certFile: certFile,
+            httpClientEventLoop: httpClientEventLoop
+        )
     }
 
     func getRequestStd(url: URL) -> HTTPClient.Request {

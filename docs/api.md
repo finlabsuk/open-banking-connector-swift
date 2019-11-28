@@ -11,7 +11,6 @@ Open Banking Connector currently supports [these](https://github.com/finlabsuk/o
 * [v3.1.1](https://openbanking.atlassian.net/wiki/spaces/DZ/pages/999622968/Account+and+Transaction+API+Specification+-+v3.1.1)
 * [v3.1.2](https://openbanking.atlassian.net/wiki/spaces/DZ/pages/1077805296/Account+and+Transaction+API+Specification+-+v3.1.2)
 
-
 ### PISP
 
 Open Banking Connector currently supports [these](https://github.com/finlabsuk/open-banking-connector/blob/master/docs/api.md#PISP-Functional-Endpoints) functional endpoints for the following UK Open Banking Read/Write API specs:
@@ -25,23 +24,11 @@ Open Banking Connector currently supports [these](https://github.com/finlabsuk/o
 | Create Software Statement Profiles | POST	/software-statement-profiles |	Array of SoftwareStatementProfile |	-
 | Create OB Client Profile | POST	/register	|OBClientProfileConfiguration |	-
 
-Before any communication with banks can begin, one or more software statements (identities) must be created via the Open Banking directory. A software statement and associated configuration information is captured in a Software Statement Profile and these may be posted using the endpoint above.
+Before any communication with banks can begin, one or more software statements (identities) must be created via the Open Banking directory. A software statement and associated configuration information are captured in a Software Statement Profile and these may be posted using the endpoint above.
 
-Once a Software Statement Profile has been created, an OB Client Profile can be created to configure conmunicaiton with an individual bank. An OB Client Profile configures both the OAuth 2 client used with the bank as well as communication preferences specfic to that bank.
+Once a Software Statement Profile has been created, an OB Client Profile can be created to configure conmunication with an individual bank. An OB Client Profile configures both the OAuth 2 client used with the bank as well as communication preferences specfic to that bank. Bank interpretations and implementations of Open Banking APIs differ and this is handled by *OBClientProfile* objects' support of options and overrides for OAuth2 client creation and API communication. Sponsors, please note that [Open Banking Test Kit](https://github.com/finlabsuk/open-banking-test-kit) contains example code for integrations with a growing list of UK banks.
 
-Once a Software Statement Profile and OB Client Profile have been created, the functional (AISP/PISP/CBPII) endpoints may be used.
-
-[More editing required here]
-
-The software allows:
-* for each Software Statement, creation of *SoftwareStatementProfile* objects which combine a Software Statement with specified preferences 
-* for each ASPSP, creation of *OBClientProfile* objects which combine a mapping to an underlying ASPSP OAuth2 client with specified ASPSP communication preferences
-* for each user, creation of account access and payment consent objects which include a mapping to an underlying ASPSP consent and enable user authorisation (URL generation and redirect handling)
-
-ASPSP interpretations and implementations of Open Banking APIs differ and this is handled by *OBClientProfile* objects' support of options and overrides for OAuth2 client creation and API communication. Sponsors, please note that [Open Banking Test Kit](https://github.com/finlabsuk/open-banking-test-kit) contains example code for integrations with a growing list of UK banks.
-
-
-
+Once at least one Software Statement Profile and one OB Client Profile have been created, the functional (AISP/PISP/CBPII) endpoints may be used.
 
 ## Functional Endpoints
 

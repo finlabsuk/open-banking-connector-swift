@@ -3,10 +3,10 @@
 *[NB: Need to resolve this upstream issue to allow running with Swift-JWT: https://github.com/IBM-Swift/Swift-JWT/issues/80 .]*
 # Overview
 
-Open Banking Connector is an interface layer that handles connections to UK Open Banking APIs. It is desiged for use as:
+Open Banking Connector is software that manages connections to UK Open Banking APIs. It is desiged for use as:
 * an interface layer for consumption of Open Banking APIs (e.g. by FinTechs who do not want to pass data through an agent)
 * an interface layer for testing functionality and live status of Open Banking APIs (e.g. by banks or FinTechs in automated regression tests) (NB: Companion product [Open Banking Test Kit](https://github.com/finlabsuk/open-banking-test-kit), available to sponsors, provides example test scripts covering a growing list of UK banks.)
-* an entire backend for an Open Banking client app (e.g. mobile phone or web app)
+* an entire basic backend for an Open Banking client app (e.g. mobile phone or web app)
 * reference software which all stakeholders in UK Open Banking can benefit from in the interests of promoting and improving Open Banking solutions for the benefit of consumers
 
 An important question is: what does Open Banking Connector provide compared to simply making direct connections to UK Open Banking APIs?
