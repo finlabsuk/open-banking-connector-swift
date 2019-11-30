@@ -13,7 +13,7 @@
 import AccountTransactionTypes
 import PaymentInitiationTypes
 
-struct OBClientProfileConfiguration: Codable {
+struct OBClientProfilePublic: Codable {
     
     // Mandatory parameters
     let softwareStatementProfileID: String

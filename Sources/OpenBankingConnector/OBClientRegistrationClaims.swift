@@ -254,7 +254,7 @@ extension OBClientRegistrationClaims {
         overrides: OBClientRegistrationClaimsOverrides?
     ) {
         self.init(
-            iss: softwareStatementProfile.softwareStatementId,
+            iss: softwareStatementProfile.softwareStatementPayload.software_id,
             aud: issuerURL,
             iat: DateExcludedFromEquatable(
                 date: Date()
@@ -266,18 +266,18 @@ extension OBClientRegistrationClaims {
                 string: UUID().uuidString
             ),
             client_id: nil,
-            redirect_uris: softwareStatementProfile.redirectURLs,
+            redirect_uris: softwareStatementProfile.softwareStatementPayload.software_redirect_uris,
             token_endpoint_auth_method: "tls_client_auth",
             grant_types: ["client_credentials", "authorization_code", "refresh_token"],
             response_types: ["code id_token"],
-            software_id: softwareStatementProfile.softwareStatementId,
-            scope: .stringWithSpaces(softwareStatementProfile.scope),
+            software_id: softwareStatementProfile.softwareStatementPayload.software_id,
+            scope: .stringWithSpaces(softwareStatementProfile.softwareStatementPayload.scope),
             software_statement: softwareStatementProfile.softwareStatement,
             application_type: "web",
             id_token_signed_response_alg: "PS256",
             request_object_signing_alg: "PS256",
             token_endpoint_auth_signing_alg: nil,
-            tls_client_auth_subject_dn: "CN=\(softwareStatementProfile.id),OU=\(softwareStatementProfile.orgId),O=OpenBanking,C=GB"
+            tls_client_auth_subject_dn: "CN=\(softwareStatementProfile.softwareStatementPayload.software_id),OU=\(softwareStatementProfile.softwareStatementPayload.org_id),O=OpenBanking,C=GB"
         )
         self.applyOverrides(overrides: overrides)
     }

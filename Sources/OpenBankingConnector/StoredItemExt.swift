@@ -116,6 +116,35 @@ extension StoredItem {
         
     }
     
+    static func load(
+        id: String,
+        on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
+        ) -> EventLoopFuture<Self> {
+        
+        let futureOnDBEventLoop = sm.db.currentValue!.select()
+            .column(SQLRaw("json"))
+            .from(self.tableName)
+            .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+            .all()
+        return futureOnDBEventLoop
+            .hop(to: eventLoop)
+            .flatMapThrowing({ rowArray -> Self in
+                let row: SQLRow = rowArray[0]
+                let valueString: String = try row.decode(column: "json", as: String.self)
+                let value: Self = try sm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
+                    Self.self,
+                    from: Data(valueString.utf8)
+                )
+                return value
+            })
+            .flatMapError({error in
+                print(error)
+                fatalError()
+            })
+        
+    }
+
+    
     func insert() -> EventLoopFuture<Void> {
         print(tableNameTmp)
         return sm.db.currentValue!.insert(into: tableNameTmp)

@@ -33,10 +33,10 @@ func endpointHandlerPostRegister(
     case .end:
         
         // Validate body data
-        let obClientProfileConfiguration: OBClientProfileConfiguration
+        let obClientProfileConfiguration: OBClientProfilePublic
         do {
             let data = buffer.readData(length: buffer.readableBytes)!
-            obClientProfileConfiguration = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBClientProfileConfiguration.self, from: data)
+            obClientProfileConfiguration = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBClientProfilePublic.self, from: data)
             print(obClientProfileConfiguration)
         } catch {
             print(error)

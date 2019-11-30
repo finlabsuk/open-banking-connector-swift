@@ -449,8 +449,8 @@ private final class HTTPHandler: ChannelInboundHandler {
             func responseCallback(status: HTTPResponseStatus = .ok, data: Data) {
                 self.state.requestComplete()
                 
-                let responseHead = httpResponseHead(request: request, status: status)
-                // TODO: add any headers
+                var responseHead = httpResponseHead(request: request, status: status)
+                responseHead.headers.add(name: "Content-Type", value: "application/json")
                 context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil) // writeAndFlush?
                 
                 var responseBuffer = context.channel.allocator.buffer(capacity: data.count)
@@ -462,6 +462,23 @@ private final class HTTPHandler: ChannelInboundHandler {
             
             /// Examine request to determine endpoint handler, return once one is found
             func setHandler() {
+                
+                // POST /software-statement-profiles
+                if
+                    request.method == .POST,
+                    request.uri == "/software-statement-profiles"
+                {
+                    self.buffer.clear()
+                    self.handler = {
+                        endpointHandlerPostSoftwareStatementProfile(
+                            context: $0,
+                            request: $1,
+                            responseCallback: responseCallback,
+                            buffer: &self.buffer
+                        )
+                    }
+                    return
+                }
                 
                 // Loop through Account Transaction resources
                 for accountTransactionResourceVariety in AccountTransactionResourceVariety.allCases {
@@ -567,15 +584,7 @@ private final class HTTPHandler: ChannelInboundHandler {
             
             // Validate request and assign handler
             let httpMethod = request.method
-            if let path = request.uri.chopPrefix("/software-statement-profiles") {
-                self.buffer.clear()
-                self.handler = {
-                    routeHandlerSoftwareStatementProfiles(
-                        context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
-                        buffer: &self.buffer
-                    )
-                }
-            } else if let path = request.uri.chopPrefix("/register") {
+            if let path = request.uri.chopPrefix("/register") {
                 if
                     path == "",
                     httpMethod == .POST 
