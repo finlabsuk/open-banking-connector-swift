@@ -1,10 +1,10 @@
 # Installation and Use
 
-Open Banking Connector runs on both Mac and Linux. It is provided as a Swift package containin an HTTP application and a library. The HTTP application presents an API which is a mirror of the functions supported by the library.
+Open Banking Connector runs on both Mac and Linux. It is provided as a Swift package containing an HTTP application and a library. The HTTP application presents an API which is a mirror of the functions supported by the library.
 
 TLS (HTTPS) support is not provided out of the box to allow local running/testing and because it is expected that this will be implemented via some type of wrapper (e.g. reverse proxy on a server).
 
-Note that bcause Open Banking redirects get sent to a TLS endpoint on a pre-registered domain, this must be available to test consent authorisation even when running locally or debugging. One way to configure this in non-production settings is via SSH port forwarding from a cloud server set up with the correct domain and an Apache front-end (see here).
+Note that because Open Banking redirects get sent to a TLS endpoint on a pre-registered domain, this must be available to test consent authorisation even when running locally or debugging. One way to configure this in non-production settings is via SSH port forwarding from a cloud server set up with the correct domain and an Apache front-end (see here).
 
 ## Installation Instructions
 
@@ -12,7 +12,7 @@ Note that bcause Open Banking redirects get sent to a TLS endpoint on a pre-regi
 
 Open Banking Connector can be installed on a Mac for local running and debugging. 
 
-Note that bcause Open Banking redirects get sent to a TLS endpoint on a pre-registered domain, this must be available to test consent authorisation.
+Note that because Open Banking redirects get sent to a TLS endpoint on a pre-registered domain, this must be available to test consent authorisation.
 
 #### Requirements:
 * Xcode 11.2 or greater
@@ -81,7 +81,7 @@ git clone https://github.com/finlabsuk/open-banking-connector.git
 cd open-banking-connector/
 sudo apt-get -y install libssl-dev # dependency from https://github.com/IBM-Swift/BlueRSA 
 sudo apt-get install -y libsqlite3-dev # dependency from https://github.com/vapor/sqlite-nio
-ulimit -n 65536 # may be necessary if linker reports "/usr/bin/ld.gold: fatal error: out of file descriptors and couldn't close any"
+ulimit -n 4096 # may be necessary if linker reports "/usr/bin/ld.gold: fatal error: out of file descriptors and couldn't close any"
 swift build
 ```
 
