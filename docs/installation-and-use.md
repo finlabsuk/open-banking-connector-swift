@@ -21,7 +21,9 @@ Note that because Open Banking redirects get sent to a TLS endpoint on a pre-reg
 
 Clone the repo locally and run/debug in Xcode on your Mac as a Swift Package using the default Scheme. Xcode will automatically download dependencies and build Open Banking Connector before running.
 
-### Linux with HTTPS reverse proxy (Apache 2)
+### Linux with HTTPS reverse proxy (Apache 2) for TLS ingress
+
+Allowing TLS ingress is useful for support of redirect URLs.
 
 #### Requirements:
 * Ubuntu 18.04
@@ -45,15 +47,26 @@ vim ~/.bashrc # Add this line then save: export PATH=/opt/swift-5.1.2/usr/bin:$P
 sudo apt-get -y install apache2
 ```
 
-#### Step 3: Configure Apache 2 as reverse proxy
+### Step 3: Configure TLS certificate
+
+```bash
+# Sample instructions
+sudo add-apt-repository ppa:certbot/certbot
+sudo apt-get -y update
+sudo apt-get -y install python-certbot-apache
+# Before performing step below, please (temporarily) enable HTTP access to server in addition to HTTPS
+sudo certbot --apache -d host # <= replace host (e.g. with a.example.com) and for last step you
+#     may wish to choose (2) Redirect to ensure HTTP redirected to HTTPS
+```
+
+#### Step 4: Configure Apache 2 as reverse proxy
 
 Configure Apache 2 to proxy TLS requests to HTTP on a specified unprivileged port (e.g. 3000) and ensure firewall is configured and enabled.
 
 ```bash
 # Sample instructions
 cd /etc/apache2/sites-enabled
-sudo ln -s ../sites-available/default-ssl.conf
-# Sample edit to default-ssl.conf near the bottom above </VirtualHost>
+# Sample edit to 000-default-le-ssl.conf near the bottom above </VirtualHost>
 # Proxy all paths to HTTP, port 3000
 ProxyRequests on
 ProxyPass / http://localhost:3000/
