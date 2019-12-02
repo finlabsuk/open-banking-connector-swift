@@ -36,7 +36,7 @@ func genJws<ClaimsType: Claims>(
 //                    crit: ["b64", "http://openbanking.org.uk/iat", "http://openbanking.org.uk/iss", "http://openbanking.org.uk/tan"],
 //                    b64: false,
 //                    obIat: Date(),
-//                    obIss: "\(softwareStatement.orgId)/\(softwareStatement.id)",
+//                    obIss: "\(softwareStatement.softwareStatementPayload.org_id)/\(softwareStatement.softwareStatementPayload.software_id)",
 //                    obTan: "openbanking.org.uk"
 //                )
                 header = Header(
