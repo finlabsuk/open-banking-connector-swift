@@ -17,12 +17,12 @@ import NIOFoundationCompat
 import AsyncHTTPClient
 import SQLKit
 
-func endpointHandlerPostSoftwareStatementProfile(
+func endpointHandlerPostAuthFragmentRedirectDelegate(
     context: ChannelHandlerContext,
     request: HTTPServerRequestPart,
     responseCallback: @escaping (HTTPResponseStatus, Data) -> Void,
     buffer: inout ByteBuffer
-) {    
+) {
     
     // Buffer body of request
     switch request {
@@ -32,36 +32,64 @@ func endpointHandlerPostSoftwareStatementProfile(
     case .end:
         
         // Validate request data
-        let softwareStatementProfile: SoftwareStatementProfile
+        let authData: OBAuthData
         do {
             let data = buffer.readData(length: buffer.readableBytes)!
             if data.isEmpty {
                 throw("No body data received in request")
             }
-            let softwareStatementProfilePublic = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(SoftwareStatementProfilePublic.self, from: data)
-            softwareStatementProfile = try SoftwareStatementProfile(softwareStatementProfilePublic: softwareStatementProfilePublic)
+            authData = OBAuthData(input: String(decoding: data, as: UTF8.self))
         } catch {
+            print("\(error)")
             let errorBody = ErrorPublic(error: "\(error)")
             responseCallback(
                 .badRequest,
                 try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
-                )
+            )
             return
         }
         
-        // Save software statement profiles
+        var consent: ConsentProtocol!
+        
         context.eventLoop.makeSucceededFuture(())
             
-            // Save software statement profile
-            .flatMap({ softwareStatementProfile.insert() })
+            // Load relevant consent
+            .flatMap({ () -> EventLoopFuture<([AccountTransactionConsent],[PaymentInitiationDomesticConsent])> in
+                return AccountTransactionConsent.load(
+                    id: nil,
+                    state: authData.state
+                ).and(PaymentInitiationDomesticConsent.load(
+                    id: nil,
+                    state: authData.state
+                ))
+            })
+            
+            // Post authorisation code grant request
+            .flatMap({(accountAccessConsentArray, paymentInitiationDomesticConsentArray) -> EventLoopFuture<OBTokenEndpointResponse> in
+                let consentArray: [ConsentProtocol] = accountAccessConsentArray + paymentInitiationDomesticConsentArray
+                
+                guard consentArray.count == 1 else {
+                    fatalError()
+                }
+                consent = consentArray[0]
+                return consent.httpPostAuthCodeGrant(code: authData.code)
+            })
+            
+            // Update consent with response
+            .flatMap({ obTokenEndpointResponse -> EventLoopFuture<Void> in
+                print(obTokenEndpointResponse)
+                consent.obTokenEndpointResponse = obTokenEndpointResponse
+                return consent.update()
+            })
             
             // Send success response
             .flatMapThrowing({
-                let successBody = SoftwareStatementProfileResponsePublic(id: softwareStatementProfile.id)
+                struct ReturnType: Codable { let message: String }
+                let successBody = ReturnType(message: "Success")
                 responseCallback(
                     .created,
                     try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(successBody)
-                    )
+                )
             })
             
             // Send failure response
@@ -70,7 +98,7 @@ func endpointHandlerPostSoftwareStatementProfile(
                 responseCallback(
                     .internalServerError,
                     try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
-                    )
+                )
                 return
             })
         

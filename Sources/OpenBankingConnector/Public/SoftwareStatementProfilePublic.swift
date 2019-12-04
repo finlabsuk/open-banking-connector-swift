@@ -18,19 +18,22 @@ struct SoftwareStatementProfilePublic: Codable {
     /// Software statement as string, e.g. "A.B.C"
     let softwareStatement: String
 
-    // Open Banking Signing Key ID as string, e.g. "ABC"
+    /// Open Banking Signing Key ID as string, e.g. "ABC"
     let obSigningKID: String
     
-    // Open Banking Signing Key as string, e.g. "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n"
+    /// Open Banking Signing Key as string, e.g. "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n"
     let obSigningKey: String
     
-    // Open Banking Signing Certificate as string, e.g. "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----\n"
+    /// Open Banking Signing Certificate as string, e.g. "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----\n"
     let obSigningPem: String
     
-    // Open Banking Signing Key as string, e.g. "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n"
+    /// Open Banking Signing Key as string, e.g. "-----BEGIN PRIVATE KEY-----\nABCD\n-----END PRIVATE KEY-----\n"
     let obTransportKey: String
     
-    // Open Banking Signing Certificate as string, e.g. "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----\n"
+    /// Open Banking Signing Certificate as string, e.g. "-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----\n"
     let obTransportPem: String
+    
+    /// Default redirect URL for OAuth clients with response_mode == fragment.
+    //let defaultFragmentRedirectURL: String?
     
 }

@@ -1,6 +1,5 @@
 ![Alt text](./docs/OBC_Banner.png)
 
-*[NB: Need to resolve this upstream issue to allow running with Swift-JWT: https://github.com/IBM-Swift/Swift-JWT/issues/80 .]*
 # Overview
 
 Open Banking Connector is software that manages connections to UK Open Banking APIs. It is desiged for use as:

@@ -22,7 +22,7 @@ Open Banking Connector currently supports [these](https://github.com/finlabsuk/o
 | Purpose     | Endpoint | Request Body | Response Body
 | - | - | - | - |
 | Create Software Statement Profiles | POST	/software-statement-profiles |	[SoftwareStatementProfilePublic](https://github.com/finlabsuk/open-banking-connector/blob/master/Sources/OpenBankingConnector/Public/SoftwareStatementProfilePublic.swift) |	[SoftwareStatementProfileResponsePublic](https://github.com/finlabsuk/open-banking-connector/blob/master/Sources/OpenBankingConnector/Public/SoftwareStatementProfileResponsePublic.swift)
-| Create OB Client Profile | POST	/register	| [OBClientProfilePublic](https://github.com/finlabsuk/open-banking-connector/blob/master/Sources/OpenBankingConnector/Public/OBClientProfilePublic.swift) |	-
+| Create OB Client Profile | POST	/register	| [OBClientProfilePublic](https://github.com/finlabsuk/open-banking-connector/blob/master/Sources/OpenBankingConnector/Public/OBClientProfilePublic.swift) |	[OBClientProfileResponsePublic](https://github.com/finlabsuk/open-banking-connector/blob/master/Sources/OpenBankingConnector/Public/OBClientProfileResponsePublic.swift)
 
 Before any communication with banks can begin, one or more software statements (identities) must be created via the Open Banking directory. A software statement and associated configuration information are captured in a Software Statement Profile and these may be posted using the endpoint above.
 

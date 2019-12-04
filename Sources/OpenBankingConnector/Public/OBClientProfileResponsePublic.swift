@@ -10,9 +10,12 @@
 //
 // ********************************************************************************
 
-/// Used for body of 400 or 500 series request errors
-struct ErrorPublic: Codable {
+import Foundation
+
+/// Response to successful POST of software statement profile
+struct OBClientProfileResponsePublic: Codable {
     
-    /// Error description
-    let error: String
+    /// ID used to uniquely identify object
+    let id: String
+    
 }

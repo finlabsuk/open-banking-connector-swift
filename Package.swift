@@ -1,4 +1,4 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -19,8 +19,10 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.9.0"),
         //.package(path: "../swift-nio"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0"),
-        .package(url: "https://github.com/IBM-Swift/Swift-JWT.git", from: "3.5.0"),
+        //.package(url: "https://github.com/IBM-Swift/Swift-JWT.git", from: "3.5.0"),
         //.package(path: "../Swift-JWT"),
+        // Temporarily use forked version of Swift-JWT whilst sorting out https://github.com/IBM-Swift/Swift-JWT/issues/80
+        .package(url: "https://github.com/markfinlabs/Swift-JWT.git", .branch("header-flexibility")),
         .package(url: "https://github.com/vapor/sqlite-kit.git", from: "4.0.0-alpha.1.1"),
         //.package(path: "../sqlite-kit"),
         .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-alpha.1.3"),

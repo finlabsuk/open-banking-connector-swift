@@ -26,21 +26,27 @@ func endpointHandlerPostRegister(
     buffer: inout ByteBuffer
 ) {
     
+    // Buffer body of request
     switch request {
     case .head: break;
     case .body(buffer: var buf):
         buffer.writeBuffer(&buf)
     case .end:
         
-        // Validate body data
-        let obClientProfileConfiguration: OBClientProfilePublic
+        // Validate request data
+        let obClientProfilePublic: OBClientProfilePublic
         do {
             let data = buffer.readData(length: buffer.readableBytes)!
-            obClientProfileConfiguration = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBClientProfilePublic.self, from: data)
-            print(obClientProfileConfiguration)
+            if data.isEmpty {
+                throw("No body data received in request")
+            }
+            obClientProfilePublic = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBClientProfilePublic.self, from: data)
         } catch {
-            print(error)
-            responseCallback(.badRequest, try! JSONEncoder().encode("\(error)"))
+            let errorBody = ErrorPublic(error: "\(error)")
+            responseCallback(
+                .badRequest,
+                try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
+            )
             return
         }
         
@@ -51,8 +57,8 @@ func endpointHandlerPostRegister(
             
             // Get OpenID configuration from well-known endpoint for issuer URL
             .flatMap({ OpenIDConfiguration.httpGet(
-                issuerURL: obClientProfileConfiguration.issuerURL,
-                overrides: obClientProfileConfiguration.openIDConfigurationOverrides
+                issuerURL: obClientProfilePublic.issuerURL,
+                overrides: obClientProfilePublic.openIDConfigurationOverrides
                 )
             })
             
@@ -60,9 +66,9 @@ func endpointHandlerPostRegister(
             .flatMap({ openIDConfigurationLocal -> EventLoopFuture<OBClientRegistrationClaims> in
                 openIDConfiguration = openIDConfigurationLocal
                 return OBClientRegistrationClaims.initAsync(
-                    issuerURL: obClientProfileConfiguration.issuerURL,
-                    softwareStatementId: obClientProfileConfiguration.softwareStatementProfileID,
-                    overrides: obClientProfileConfiguration.obClientRegistrationClaimsOverrides
+                    issuerURL: obClientProfilePublic.issuerURL,
+                    softwareStatementId: obClientProfilePublic.softwareStatementProfileID,
+                    overrides: obClientProfilePublic.obClientRegistrationClaimsOverrides
                 )
             })
             
@@ -71,8 +77,8 @@ func endpointHandlerPostRegister(
                 obClientRegistrationClaims = obClientRegistrationClaimsTmp
                 return OBClientProfile.load(
                     id: nil,
-                    softwareStatementProfileId: obClientProfileConfiguration.softwareStatementProfileID,
-                    issuerURL: obClientProfileConfiguration.issuerURL
+                    softwareStatementProfileId: obClientProfilePublic.softwareStatementProfileID,
+                    issuerURL: obClientProfilePublic.issuerURL
                 )
             })
             
@@ -92,17 +98,17 @@ func endpointHandlerPostRegister(
                     
                     // Post OB client registration claims
                     return obClientRegistrationClaims.httpPost(
-                        softwareStatementProfileId: obClientProfileConfiguration.softwareStatementProfileID,
-                        softwareStatementId: obClientProfileConfiguration.softwareStatementProfileID,
-                        issuerURL: obClientProfileConfiguration.issuerURL,
-                        xFapiFinancialId: obClientProfileConfiguration.xFapiFinancialID,
-                        accountTransactionAPIVersion: obClientProfileConfiguration.accountTransactionAPIVersion,
-                        accountTransactionAPIBaseURL: obClientProfileConfiguration.accountTransactionAPIBaseURL,
-                        paymentInitiationAPIVersion: obClientProfileConfiguration.paymentInitiationAPIVersion,
-                        paymentInitiationAPIBaseURL: obClientProfileConfiguration.paymentInitiationAPIBaseURL,
-                        httpClientMTLSConfigurationOverrides: obClientProfileConfiguration.httpClientMTLSConfigurationOverrides,
-                        obClientRegistrationResponseOverrides: obClientProfileConfiguration.obClientRegistrationResponseOverrides,
-                        obAccountTransactionAPISettingsOverrides: obClientProfileConfiguration.obAccountTransactionAPISettingsOverrides,
+                        softwareStatementProfileId: obClientProfilePublic.softwareStatementProfileID,
+                        softwareStatementId: obClientProfilePublic.softwareStatementProfileID,
+                        issuerURL: obClientProfilePublic.issuerURL,
+                        xFapiFinancialId: obClientProfilePublic.xFapiFinancialID,
+                        accountTransactionAPIVersion: obClientProfilePublic.accountTransactionAPIVersion,
+                        accountTransactionAPIBaseURL: obClientProfilePublic.accountTransactionAPIBaseURL,
+                        paymentInitiationAPIVersion: obClientProfilePublic.paymentInitiationAPIVersion,
+                        paymentInitiationAPIBaseURL: obClientProfilePublic.paymentInitiationAPIBaseURL,
+                        httpClientMTLSConfigurationOverrides: obClientProfilePublic.httpClientMTLSConfigurationOverrides,
+                        obClientRegistrationResponseOverrides: obClientProfilePublic.obClientRegistrationResponseOverrides,
+                        obAccountTransactionAPISettingsOverrides: obClientProfilePublic.obAccountTransactionAPISettingsOverrides,
                         openIDConfiguration: openIDConfiguration
                     )
                         // Save OB client
@@ -119,21 +125,22 @@ func endpointHandlerPostRegister(
             
             // Send success response
             .flatMapThrowing({ obClientId in
-                struct ReturnType: Encodable { let id: String }
-                let returnJson = try! JSONEncoder().encode(ReturnType(id: obClientId))
-                responseCallback(.created, returnJson)
+                let successBody = OBClientProfileResponsePublic(id: obClientId)
+                responseCallback(
+                    .created,
+                    try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(successBody)
+                )
             })
             
             // Send failure response
-            .whenFailure({error in
-                struct ReturnType: Encodable { let error: String }
-                let returnJson = try! JSONEncoder().encode(ReturnType(error: "\(error)"))
-                responseCallback(.internalServerError, returnJson)
+            .whenFailure({ error in
+                let errorBody = ErrorPublic(error: "\(error)")
+                responseCallback(
+                    .internalServerError,
+                    try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
+                )
+                return
             })
         
     }
 }
-
-
-
-

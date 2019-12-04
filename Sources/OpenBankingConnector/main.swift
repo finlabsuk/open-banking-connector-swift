@@ -469,14 +469,27 @@ private final class HTTPHandler: ChannelInboundHandler {
                     request.uri == "/software-statement-profiles"
                 {
                     self.buffer.clear()
-                    self.handler = {
-                        endpointHandlerPostSoftwareStatementProfile(
-                            context: $0,
-                            request: $1,
-                            responseCallback: responseCallback,
-                            buffer: &self.buffer
-                        )
-                    }
+                    self.handler = { endpointHandlerPostSoftwareStatementProfile(
+                        context: $0,
+                        request: $1,
+                        responseCallback: responseCallback,
+                        buffer: &self.buffer
+                        ) }
+                    return
+                }
+                
+                // POST /register
+                if
+                    request.method == .POST,
+                    request.uri == "/register"
+                {
+                    self.buffer.clear()
+                    self.handler = { endpointHandlerPostRegister(
+                        context: $0,
+                        request: $1,
+                        responseCallback: responseCallback,
+                        buffer: &self.buffer
+                        ) }
                     return
                 }
                 
@@ -580,40 +593,42 @@ private final class HTTPHandler: ChannelInboundHandler {
                         return
                     }
                 }
+                
+                if let path = request.uri.chopPrefix("/auth") {
+                    
+                    // GET /auth/fragment-redirect
+                    if
+                        request.method == .GET,
+                        path == "/fragment-redirect"
+                    {
+                        self.handler = { self.handleFile(
+                            context: $0,
+                            request: $1,
+                            ioMethod: .nonblockingFileIO,
+                            path: "/auth-fragment-redirect.html"
+                            ) }
+                        return
+                    }
+                        
+                    // POST /auth/fragment-redirect-delegate
+                    else if
+                        request.method == .POST,
+                        path == "/fragment-redirect-delegate"
+                    {
+                        self.buffer.clear()
+                        self.handler = { endpointHandlerPostAuthFragmentRedirectDelegate(
+                            context: $0,
+                            request: $1,
+                            responseCallback: responseCallback,
+                            buffer: &self.buffer
+                            ) }
+                        return
+                    }
+                }
             }
             
             // Validate request and assign handler
-            let httpMethod = request.method
-            if let path = request.uri.chopPrefix("/register") {
-                if
-                    path == "",
-                    httpMethod == .POST 
-                {
-                    self.buffer.clear()
-                    self.handler = { endpointHandlerPostRegister(
-                        context: $0,
-                        request: $1,
-                        responseCallback: responseCallback,
-                        buffer: &self.buffer
-                        )}
-                }
-            } else if let path = request.uri.chopPrefix("/auth") {
-                if path == "/fragment-redirect",
-                    httpMethod == .GET
-                {
-                    self.handler = { self.handleFile(context: $0, request: $1, ioMethod: .nonblockingFileIO, path: "/auth-fragment-redirect.html")
-                    }
-                } else {
-                    self.buffer.clear()
-                    self.handler = { routeHandlerAuth(
-                        context: $0, request: $1, httpMethod: httpMethod, path: path, responseCallback: responseCallback,
-                        buffer: &self.buffer
-                        )}
-                }
-            } else {
-                setHandler()
-            }
-            
+            setHandler()
             if let handler = self.handler {
                 self.keepAlive = request.isKeepAlive
                 self.state.requestReceived()
