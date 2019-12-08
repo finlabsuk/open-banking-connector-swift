@@ -1,6 +1,6 @@
 ## Introduction
 
-Open Banking Connector welcomes contributors from all developers irrespective of background.
+Open Banking Connector welcomes contributions from all developers irrespective of background.
 
 Open Banking Connector has adopted a code of conduct defined by [contributor-covenant.org](https://www.contributor-covenant.org) which is used by many open source projects.
 
