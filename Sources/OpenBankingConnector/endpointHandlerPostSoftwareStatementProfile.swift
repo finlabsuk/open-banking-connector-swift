@@ -71,7 +71,6 @@ func endpointHandlerPostSoftwareStatementProfile(
                     .internalServerError,
                     try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
                     )
-                return
             })
         
     }

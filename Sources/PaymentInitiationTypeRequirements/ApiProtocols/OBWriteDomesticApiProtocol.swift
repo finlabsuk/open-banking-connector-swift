@@ -32,6 +32,9 @@ public protocol OBWriteDomesticDataApiProtocol {
     var consentId: String { get }
     var initiation: OBWriteDomesticDataInitiationApi { get }
 
-    init(consentId: String, initiation: OBWriteDomesticDataInitiationApi)
+    init(
+        consentId: String,
+        initiation: OBWriteDomesticDataInitiationApi
+    )
 }
 

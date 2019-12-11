@@ -28,8 +28,8 @@ extension Meta: MetaApiProtocol { }
 public typealias OBWriteDomesticConsentResponseDataType = OBWriteDataDomesticConsentResponse2
 public typealias OBWriteDomesticConsentResponseDataCharges = OBCharge2
 extension OBWriteDomesticConsentResponseDataType: OBWriteDomesticConsentResponseDataApiProtocol {
-    public var statusEnum: OBWriteDomesticConsentResponseDataApiStatus? {
-        return OBWriteDomesticConsentResponseDataApiStatus(rawValue: status.rawValue)
+    public var statusEnum: OBWritePaymentConsentResponseDataApiStatusEnum? {
+        return OBWritePaymentConsentResponseDataApiStatusEnum(rawValue: status.rawValue)
     }
     public var sCASupportData: Void? { return nil }
     public typealias OBWriteDomesticDataInitiation = OBDomestic2
@@ -37,6 +37,10 @@ extension OBWriteDomesticConsentResponseDataType: OBWriteDomesticConsentResponse
     public typealias OBWriteDomesticConsentDataSCASupportData = Void
     public typealias Status = OBExternalConsentStatus1Code
 }
-extension OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol { }
+extension OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol {
+    public var chargeBearerEnum: OBChargeBearerTypeCodeEnum? {
+        return OBChargeBearerTypeCodeEnum(rawValue: chargeBearer.rawValue)
+    }
+}
 extension OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountApiProtocol { }
 

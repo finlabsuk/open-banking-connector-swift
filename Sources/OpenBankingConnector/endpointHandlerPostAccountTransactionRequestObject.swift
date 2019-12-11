@@ -118,7 +118,7 @@ func endpointHandlerPostAccountTransactionRequestObject(
                             
                             // Send success response
                             .flatMapThrowing({ authURL in
-                                let response = PostConsentResponse(authURL: authURL, consentId: obCreatedItem.id)
+                                let response = PostConsentResponse(authURL: authURL, consentID: obCreatedItem.id)
                                 let returnJson = try! JSONEncoder().encode(response)
                                 input.responseCallback(.created, returnJson)
                             })

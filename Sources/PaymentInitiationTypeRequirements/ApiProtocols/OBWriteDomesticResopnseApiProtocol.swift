@@ -23,14 +23,7 @@ public protocol OBWritePaymentResponseApiProtocol: Codable {
 
 public protocol OBWriteDomesticResponseApiProtocol: OBWritePaymentResponseApiProtocol where OBWritePaymentResponseDataApi: OBWriteDomesticResponseDataApiProtocol { }
 
-public protocol OBWritePaymentResponseDataApiProtocol: Codable {
-    associatedtype StatusEnum: RawRepresentable, Codable where StatusEnum.RawValue == String
-    /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
-    var consentId: String { get }
-    var statusEnum: StatusEnum? { get }
-}
-
-public enum OBWriteDomesticResponseDataApiStatusEnum: String, Codable {
+public enum OBWritePaymentResponseDataApiStatusEnum: String, Codable {
     case acceptedCreditSettlementCompleted = "AcceptedCreditSettlementCompleted"
     case acceptedSettlementCompleted = "AcceptedSettlementCompleted"
     case acceptedSettlementInProcess = "AcceptedSettlementInProcess"
@@ -39,7 +32,13 @@ public enum OBWriteDomesticResponseDataApiStatusEnum: String, Codable {
     case rejected = "Rejected"
 }
 
-public protocol OBWriteDomesticResponseDataApiProtocol: OBWritePaymentResponseDataApiProtocol where StatusEnum == OBWriteDomesticResponseDataApiStatusEnum {
+public protocol OBWritePaymentResponseDataApiProtocol: Codable {
+    /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
+    var consentId: String { get }
+    var statusEnum: OBWritePaymentResponseDataApiStatusEnum? { get }
+}
+
+public protocol OBWriteDomesticResponseDataApiProtocol: OBWritePaymentResponseDataApiProtocol {
     associatedtype Status: RawRepresentable, Codable where Status.RawValue == String
     associatedtype OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol
     associatedtype OBWriteDomesticDataInitiation: OBWriteDomesticDataInitiationProtocol
@@ -53,7 +52,6 @@ public protocol OBWriteDomesticResponseDataApiProtocol: OBWritePaymentResponseDa
     var creationDateTime: Date { get }
     /** Specifies the status of the payment information group. */
     var status: Status { get }
-    var statusEnum: OBWriteDomesticResponseDataApiStatusEnum? { get }
     /** Date and time at which the resource status was updated.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
     var statusUpdateDateTime: Date { get }
     /** Expected execution date and time for the payment resource.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */

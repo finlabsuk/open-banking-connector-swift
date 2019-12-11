@@ -30,7 +30,7 @@ public protocol PaymentInitiationProcesingBlock {
         apiTypesType: T.Type,
         dynamicTypeVariety: DynamicTypeVariety,
         input: InputType
-    ) throws -> OutputType
+    ) -> OutputType
 }
 
 extension PaymentInitiationProcesingBlock {
@@ -38,12 +38,12 @@ extension PaymentInitiationProcesingBlock {
         _ apiVersion: PaymentInitiationApiVersion,
         _ dynamicTypeVariety: DynamicTypeVariety,
         _ input: InputType
-    ) throws -> OutputType {
+    ) -> OutputType {
         switch apiVersion {
         case .V3p1p1:
-            return try executeIntermediate(apiTypesType: PaymentInitiationRequestObjectApiV3p1p1Types.self, dynamicTypeVariety: dynamicTypeVariety, input: input)
+            return executeIntermediate(apiTypesType: PaymentInitiationRequestObjectApiV3p1p1Types.self, dynamicTypeVariety: dynamicTypeVariety, input: input)
         case .V3p1p2:
-            return try executeIntermediate(apiTypesType: PaymentInitiationRequestObjectApiV3p1p2Types.self, dynamicTypeVariety: dynamicTypeVariety, input: input)
+            return executeIntermediate(apiTypesType: PaymentInitiationRequestObjectApiV3p1p2Types.self, dynamicTypeVariety: dynamicTypeVariety, input: input)
         }
     }
 }
@@ -70,7 +70,7 @@ public protocol PaymentInitiationProcesingBlock_OBWritePaymentConsentLocal: Paym
     static func executeInner<OBWritePaymentConsentLocal: OBWritePaymentConsentLocalProtocol>(
         dynamicType: OBWritePaymentConsentLocal.Type,
         input: InputType
-    ) throws -> OutputType
+    ) -> OutputType
 }
 
 extension PaymentInitiationProcesingBlock_OBWritePaymentConsentLocal {
@@ -78,10 +78,10 @@ extension PaymentInitiationProcesingBlock_OBWritePaymentConsentLocal {
         apiTypesType: T.Type,
         dynamicTypeVariety: PaymentInitiationPaymentVariety,
         input: InputType
-    ) throws -> OutputType {
+    ) -> OutputType {
         switch dynamicTypeVariety {
         case .domesticPayment:
-            return try Self.executeInner(
+            return Self.executeInner(
                 dynamicType: OBWriteDomesticConsentLocal<T.OBWriteDomesticConsentApiType, T.OBWriteDomesticApiType>.self,
                 input: input
             )

@@ -33,8 +33,10 @@ struct OpenIDConfiguration: Codable {
     var registration_endpoint: String
     
     static func httpGet(issuerURL: String, overrides: OpenIDConfigurationOverrides?) -> EventLoopFuture<OpenIDConfiguration> {
+        let url = URL(string: issuerURL + "/.well-known/openid-configuration")!
+        print("\(url)")
         let request = hcm.getRequestStd(
-            url: URL(string: issuerURL + "/.well-known/openid-configuration")!
+            url: url
         )
         return hcm.clientNoMTLS
             .execute(request: request)
@@ -42,7 +44,7 @@ struct OpenIDConfiguration: Codable {
                 if response.status == .ok,
                     var body = response.body {
                     let data = body.readData(length: body.readableBytes)!
-                    var config = try decoder.decode(
+                    var config = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
                         OpenIDConfiguration.self,
                         from: data)
                     config.applyOverrides(overrides: overrides)

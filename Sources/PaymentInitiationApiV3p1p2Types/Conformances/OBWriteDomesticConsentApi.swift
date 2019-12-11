@@ -10,8 +10,9 @@
 //
 // ********************************************************************************
 
-import PaymentInitiationTypeRequirements
+import Foundation
 import BaseServices
+import PaymentInitiationTypeRequirements
 
 public typealias OBWriteDomesticConsentApi = OBWriteDomesticConsent3
 public typealias OBWriteDomesticConsentDataType = OBWriteDomesticConsent3Data
@@ -53,9 +54,90 @@ extension OBWriteDomesticDataInitiationCreditorAccountType: OBWriteDomesticDataI
 }
 extension OBWriteDomesticDataInitiationRemittanceInformationType: OBWriteDomesticDataInitiationRemittanceInformationProtocol { }
 
-extension OBWriteDomesticConsentDataAuthorisationType: OBWriteDomesticConsentDataAuthorisationProtocol { }
+extension OBWriteDomesticConsentDataAuthorisationType: OBWriteDomesticConsentDataAuthorisationProtocol {
+    public var authorisationTypeEnum: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum? {
+        return OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum(rawValue: authorisationType.rawValue)
+    }
+    
+    public init(authorisationType: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum, completionDateTime: Date?) throws {
+        guard let authorisationType = AuthorisationType(rawValue: authorisationType.rawValue) else {
+            throw "Invalid enum field for OB API version"
+        }
+        self.init(authorisationType: authorisationType, completionDateTime: completionDateTime)
+    }
+}
 
-extension OBWriteDomesticConsentDataSCASupportDataType: OBWriteDomesticConsentDataSCASupportDataProtocol { }
+extension OBWriteDomesticConsentDataSCASupportDataType: OBWriteDomesticConsentDataSCASupportDataProtocol {
+    public init(requestedSCAExemptionType: OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum?, appliedAuthenticationApproach: OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum?, referencePaymentOrderId: String?) throws {
+        let requestedSCAExemptionTypeNew: RequestedSCAExemptionType?
+        switch requestedSCAExemptionType {
+        case .none:
+            requestedSCAExemptionTypeNew = .none
+        case .some(let value):
+            guard let newValue = RequestedSCAExemptionType(rawValue: value.rawValue)
+                else {
+                    throw "Invalid enum field for OB API version"
+            }
+            requestedSCAExemptionTypeNew = .some(newValue)
+        }
+        let appliedAuthenticationApproachNew: AppliedAuthenticationApproach?
+        switch appliedAuthenticationApproach {
+        case .none:
+            appliedAuthenticationApproachNew = .none
+        case .some(let value):
+            guard let newValue = AppliedAuthenticationApproach(rawValue: value.rawValue)
+                else {
+                    throw "Invalid enum field for OB API version"
+            }
+            appliedAuthenticationApproachNew = .some(newValue)
+        }
+        self.init(requestedSCAExemptionType: requestedSCAExemptionTypeNew, appliedAuthenticationApproach: appliedAuthenticationApproachNew, referencePaymentOrderId: referencePaymentOrderId)
+    }
+    
+    public var requestedSCAExemptionTypeEnum: OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum?? {
+        if let requestedSCAExemptionType = requestedSCAExemptionType {
+            return .some(
+                OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum(rawValue: requestedSCAExemptionType.rawValue)
+            )
+        }
+        return .none
+    }
+    
+    public var appliedAuthenticationApproachEnum: OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum?? {
+        if let appliedAuthenticationApproach = appliedAuthenticationApproach {
+            return .some(
+                OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum(rawValue: appliedAuthenticationApproach.rawValue)
+            )
+        }
+        return .none
+    }
+}
 
-extension OBRiskApi: OBRiskApiProtocol { }
+extension OBRiskApi: OBRiskApiProtocol {
+    public var paymentContextCodeEnum: OBRiskApiPaymentContextCodeEnum?? {
+        get {
+            if let paymentContextCode = paymentContextCode {
+                return .some(
+                    OBRiskApiPaymentContextCodeEnum(rawValue: paymentContextCode.rawValue)
+                )
+            }
+            return .none
+        }
+    }
+    
+    public init(paymentContextCode: OBRiskApiPaymentContextCodeEnum?, merchantCategoryCode: String?, merchantCustomerIdentification: String?, deliveryAddress: OBRisk1DeliveryAddress?) throws {
+        let paymentContextCodeNew: PaymentContextCode?
+        switch paymentContextCode {
+        case .none:
+            paymentContextCodeNew = .none
+        case .some(let value):
+            guard let newValue = PaymentContextCode(rawValue: value.rawValue)
+                else {
+                    throw "Invalid enum field for OB API version"
+            }
+            paymentContextCodeNew = .some(newValue)
+        }
+        self.init(paymentContextCode: paymentContextCodeNew, merchantCategoryCode: merchantCategoryCode, merchantCustomerIdentification: merchantCustomerIdentification, deliveryAddress: deliveryAddress)
+    }
+}
 extension OBRiskDeliveryAddress: OBRiskDeliveryAddressProtocol { }

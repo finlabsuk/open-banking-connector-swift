@@ -12,5 +12,6 @@
 
 struct PostConsentResponse: Codable {
     let authURL: String
-    let consentId: String
+    let consentID: String
+    let status: String = "placeholder"
 }

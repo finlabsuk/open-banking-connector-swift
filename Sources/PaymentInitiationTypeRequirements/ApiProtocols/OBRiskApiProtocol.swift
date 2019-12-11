@@ -12,19 +12,33 @@
 
 import Foundation
 
+public enum OBRiskApiPaymentContextCodeEnum: String, Codable {
+    case billPayment = "BillPayment"
+    case ecommerceGoods = "EcommerceGoods"
+    case ecommerceServices = "EcommerceServices"
+    case other = "Other"
+    case partyToParty = "PartyToParty"
+}
+
 public protocol OBRiskApiProtocol: Codable {
     associatedtype OBRiskDeliveryAddress: OBRiskDeliveryAddressProtocol
     associatedtype PaymentContextCode: RawRepresentable, Codable where PaymentContextCode.RawValue == String
     
     /** Specifies the payment context */
-    var paymentContextCode: PaymentContextCode? {get set}
+    var paymentContextCode: PaymentContextCode? { get }
+    var paymentContextCodeEnum: OBRiskApiPaymentContextCodeEnum?? { get }
     /** Category code conform to ISO 18245, related to the type of services or goods the merchant provides for the transaction. */
-    var merchantCategoryCode: String? {get set}
+    var merchantCategoryCode: String? { get }
     /** The unique customer identifier of the PSU with the merchant. */
-    var merchantCustomerIdentification: String? {get set}
-    var deliveryAddress: OBRiskDeliveryAddress? {get set}
+    var merchantCustomerIdentification: String? { get }
+    var deliveryAddress: OBRiskDeliveryAddress? { get }
     
-    init(paymentContextCode: PaymentContextCode?, merchantCategoryCode: String?, merchantCustomerIdentification: String?, deliveryAddress: OBRiskDeliveryAddress?)
+    init(
+        paymentContextCode: OBRiskApiPaymentContextCodeEnum?,
+        merchantCategoryCode: String?,
+        merchantCustomerIdentification: String?,
+        deliveryAddress: OBRiskDeliveryAddress?
+    ) throws
 }
 
 /** Information that locates and identifies a specific address, as defined by postal services or in free format text. */

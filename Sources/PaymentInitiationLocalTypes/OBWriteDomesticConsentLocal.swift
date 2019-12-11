@@ -11,6 +11,7 @@
 // ********************************************************************************
 
 import Foundation
+import BaseServices
 import PaymentInitiationTypeRequirements
 
 // Note: Local Types are spec-version-independent but in order to support conversion to API Types
@@ -45,17 +46,17 @@ public struct OBWriteDomesticConsentLocal<
         case risk = "Risk"
     }
     
-    public func obWritePaymentConsentApi() -> OBWritePaymentConsentApi {
-        OBWritePaymentConsentApi.init(
+    public func obWritePaymentConsentApi() throws -> OBWritePaymentConsentApi {
+        try OBWritePaymentConsentApi.init(
             data: data.obWriteDomesticConsentDataApi(),
             risk: risk.obRiskApi()
         )
     }
-    public func obWritePaymentApi(consentId: String) -> OBWritePaymentApi {
+    public func obWritePaymentApi(consentId: String) throws -> OBWritePaymentApi {
         OBWritePaymentApi.init(
             data: data.obWriteDomesticDataApi(consentId: consentId),
             // Forced cast necessary as compiler forgets OBRiskApi in both contexts are same type
-            risk: risk.obRiskApi() as! OBWritePaymentApi.OBRiskApi
+            risk: try risk.obRiskApi() as! OBWritePaymentApi.OBRiskApi
         )
     }
     
@@ -82,8 +83,8 @@ public struct OBWriteDomesticConsentDataLocal<
         case sCASupportData = "SCASupportData"
     }
 
-    public func obWriteDomesticConsentDataApi() -> OBWriteDomesticConsentDataApi {
-        OBWriteDomesticConsentDataApi.init(
+    public func obWriteDomesticConsentDataApi() throws -> OBWriteDomesticConsentDataApi {
+        try OBWriteDomesticConsentDataApi.init(
             initiation: initiation.obWriteDomesticDataInitiationApi(),
             authorisation: authorisation?.obWriteDomesticConsentDataAuthorisationType(),
             sCASupportData: sCASupportData?.obWriteDomesticConsentDataSCASupportDataType()
@@ -304,11 +305,11 @@ public extension OBWriteDomesticDataInitiationRemittanceInformationProtocol {
 public struct OBWriteDomesticConsentDataAuthorisationLocal<OBWriteDomesticConsentDataAuthorisationType: OBWriteDomesticConsentDataAuthorisationProtocol>: Codable {
 
     /** Type of authorisation flow requested. */
-    public var authorisationType: OBWriteDomesticConsentDataAuthorisationType.AuthorisationType
+    public var authorisationType: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum
     /** Date and time at which the requested authorisation flow must be completed.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
     public var completionDateTime: Date?
 
-    public init(authorisationType: OBWriteDomesticConsentDataAuthorisationType.AuthorisationType, completionDateTime: Date?) {
+    public init(authorisationType: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum, completionDateTime: Date?) {
         self.authorisationType = authorisationType
         self.completionDateTime = completionDateTime
     }
@@ -318,14 +319,17 @@ public struct OBWriteDomesticConsentDataAuthorisationLocal<OBWriteDomesticConsen
         case completionDateTime = "CompletionDateTime"
     }
     
-    public func obWriteDomesticConsentDataAuthorisationType() -> OBWriteDomesticConsentDataAuthorisationType {
-        OBWriteDomesticConsentDataAuthorisationType.init(authorisationType: authorisationType, completionDateTime: completionDateTime)
+    public func obWriteDomesticConsentDataAuthorisationType() throws -> OBWriteDomesticConsentDataAuthorisationType {
+        try OBWriteDomesticConsentDataAuthorisationType.init(authorisationType: authorisationType, completionDateTime: completionDateTime)
     }
 
 }
 public extension OBWriteDomesticConsentDataAuthorisationProtocol {
-    func obWriteDomesticConsentDataAuthorisationLocal() -> OBWriteDomesticConsentDataAuthorisationLocal<Self> {
-        OBWriteDomesticConsentDataAuthorisationLocal.init(
+    func obWriteDomesticConsentDataAuthorisationLocal() throws -> OBWriteDomesticConsentDataAuthorisationLocal<Self> {
+        guard let authorisationType = authorisationTypeEnum else {
+            throw "Invalid enum value received from OB API"
+        }
+        return OBWriteDomesticConsentDataAuthorisationLocal<Self>.init(
             authorisationType: authorisationType,
             completionDateTime: completionDateTime
         )
@@ -335,28 +339,14 @@ public extension OBWriteDomesticConsentDataAuthorisationProtocol {
 
 public struct OBWriteDomesticConsentDataSCASupportDataLocal<OBWriteDomesticConsentDataSCASupportDataType>: Codable {
 
-    public enum RequestedSCAExemptionType: String, Codable {
-        case billPayment = "BillPayment"
-        case contactlessTravel = "ContactlessTravel"
-        case ecommerceGoods = "EcommerceGoods"
-        case ecommerceServices = "EcommerceServices"
-        case kiosk = "Kiosk"
-        case parking = "Parking"
-        case partyToParty = "PartyToParty"
-    }
-    public enum AppliedAuthenticationApproach: String, Codable {
-        case ca = "CA"
-        case sca = "SCA"
-    }
-
     /** This field allows a PISP to request specific SCA Exemption for a Payment Initiation */
-    public var requestedSCAExemptionType: RequestedSCAExemptionType?
+    public var requestedSCAExemptionType: OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum?
     /** Specifies a character string with a maximum length of 40 characters. Usage: This field indicates whether the PSU was subject to SCA performed by the TPP */
-    public var appliedAuthenticationApproach: AppliedAuthenticationApproach?
+    public var appliedAuthenticationApproach: OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum?
     /** Specifies a character string with a maximum length of 140 characters. Usage: If the payment is recurring then the transaction identifier of the previous payment occurrence so that the ASPSP can verify that the PISP, amount and the payee are the same as the previous occurrence. */
     public var referencePaymentOrderId: String?
 
-    public init(requestedSCAExemptionType: RequestedSCAExemptionType?, appliedAuthenticationApproach: AppliedAuthenticationApproach?, referencePaymentOrderId: String?) {
+    public init(requestedSCAExemptionType: OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum?, appliedAuthenticationApproach: OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum?, referencePaymentOrderId: String?) {
         self.requestedSCAExemptionType = requestedSCAExemptionType
         self.appliedAuthenticationApproach = appliedAuthenticationApproach
         self.referencePaymentOrderId = referencePaymentOrderId
@@ -375,23 +365,25 @@ extension OBWriteDomesticConsentDataSCASupportDataLocal {
     public func obWriteDomesticConsentDataSCASupportDataType() -> OBWriteDomesticConsentDataSCASupportDataType { fatalError("OBWriteDomesticConsentDataSCASupportDataType must either be Void or conform to OBWriteDomesticConsentDataSCASupportDataProtocol") }
 }
 extension OBWriteDomesticConsentDataSCASupportDataLocal where OBWriteDomesticConsentDataSCASupportDataType: OBWriteDomesticConsentDataSCASupportDataProtocol {
-    public func obWriteDomesticConsentDataSCASupportDataType() -> OBWriteDomesticConsentDataSCASupportDataType {
-        let requestedSCAExemptionTypeTmp: OBWriteDomesticConsentDataSCASupportDataType.RequestedSCAExemptionType? = (requestedSCAExemptionType != nil) ?
-            OBWriteDomesticConsentDataSCASupportDataType.RequestedSCAExemptionType(rawValue: requestedSCAExemptionType!.rawValue) : nil
-        let appliedAuthenticationApproachTmp: OBWriteDomesticConsentDataSCASupportDataType.AppliedAuthenticationApproach? = (appliedAuthenticationApproach != nil) ?
-            OBWriteDomesticConsentDataSCASupportDataType.AppliedAuthenticationApproach(rawValue: appliedAuthenticationApproach!.rawValue) : nil
-        return OBWriteDomesticConsentDataSCASupportDataType.init(
-            requestedSCAExemptionType: requestedSCAExemptionTypeTmp,
-            appliedAuthenticationApproach: appliedAuthenticationApproachTmp,
+    public func obWriteDomesticConsentDataSCASupportDataType() throws -> OBWriteDomesticConsentDataSCASupportDataType {
+        return try OBWriteDomesticConsentDataSCASupportDataType.init(
+            requestedSCAExemptionType: requestedSCAExemptionType,
+            appliedAuthenticationApproach: appliedAuthenticationApproach,
             referencePaymentOrderId: referencePaymentOrderId)
     }
 }
 public extension OBWriteDomesticConsentDataSCASupportDataProtocol {
-    func obWriteDomesticConsentDataSCASupportDataLocal() -> OBWriteDomesticConsentDataSCASupportDataLocal<Self> {
-        OBWriteDomesticConsentDataSCASupportDataLocal.init(
-            requestedSCAExemptionType: OBWriteDomesticConsentDataSCASupportDataLocal.RequestedSCAExemptionType.init(rawValue: requestedSCAExemptionType!.rawValue)!,
-            appliedAuthenticationApproach: OBWriteDomesticConsentDataSCASupportDataLocal.AppliedAuthenticationApproach.init(rawValue: appliedAuthenticationApproach!.rawValue)!,
-            referencePaymentOrderId: referencePaymentOrderId
+    func obWriteDomesticConsentDataSCASupportDataLocal() throws -> OBWriteDomesticConsentDataSCASupportDataLocal<Self> {
+        guard
+            let requestedSCAExemptionType = requestedSCAExemptionTypeEnum,
+            let appliedAuthenticationApproach = appliedAuthenticationApproachEnum
+            else {
+                throw "Invalid enum value received from OB API"
+        }
+        return OBWriteDomesticConsentDataSCASupportDataLocal<Self>.init(
+                requestedSCAExemptionType: requestedSCAExemptionType,
+                appliedAuthenticationApproach: appliedAuthenticationApproach,
+                referencePaymentOrderId: referencePaymentOrderId
         )
     }
 }

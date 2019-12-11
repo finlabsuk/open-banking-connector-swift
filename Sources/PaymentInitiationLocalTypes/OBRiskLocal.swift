@@ -11,6 +11,7 @@
 // ********************************************************************************
 
 import Foundation
+import BaseServices
 import PaymentInitiationTypeRequirements
 
 // Note: Local Types are spec-version-independent but in order to support conversion to API Types
@@ -23,16 +24,8 @@ import PaymentInitiationTypeRequirements
 /** The Risk section is sent by the initiating party to the ASPSP. It is used to specify additional details for risk scoring for Payments. */
 public struct OBRiskLocal<OBRiskApi: OBRiskApiProtocol>: Codable {
     
-    public enum PaymentContextCode: String, Codable {
-        case billPayment = "BillPayment"
-        case ecommerceGoods = "EcommerceGoods"
-        case ecommerceServices = "EcommerceServices"
-        case other = "Other"
-        case partyToParty = "PartyToParty"
-    }
-
     /** Specifies the payment context */
-    public var paymentContextCode: PaymentContextCode?
+    public var paymentContextCode: OBRiskApiPaymentContextCodeEnum?
     /** Category code conform to ISO 18245, related to the type of services or goods the merchant provides for the transaction. */
     public var merchantCategoryCode: String?
     /** The unique customer identifier of the PSU with the merchant. */
@@ -40,7 +33,7 @@ public struct OBRiskLocal<OBRiskApi: OBRiskApiProtocol>: Codable {
     public var deliveryAddress: OBRiskDeliveryAddressLocal<OBRiskApi.OBRiskDeliveryAddress>?
     
     public init(
-        paymentContextCode: PaymentContextCode?,
+        paymentContextCode: OBRiskApiPaymentContextCodeEnum?,
         merchantCategoryCode: String?,
         merchantCustomerIdentification: String?,
         deliveryAddress: OBRiskDeliveryAddressLocal<OBRiskApi.OBRiskDeliveryAddress>?
@@ -58,9 +51,9 @@ public struct OBRiskLocal<OBRiskApi: OBRiskApiProtocol>: Codable {
         case deliveryAddress = "DeliveryAddress"
     }
     
-    func obRiskApi() -> OBRiskApi {
-        OBRiskApi.init(
-            paymentContextCode: OBRiskApi.PaymentContextCode(rawValue: paymentContextCode!.rawValue),
+    func obRiskApi() throws -> OBRiskApi {
+        return try OBRiskApi.init(
+            paymentContextCode: paymentContextCode,
             merchantCategoryCode: merchantCategoryCode,
             merchantCustomerIdentification: merchantCustomerIdentification,
             deliveryAddress: deliveryAddress?.obRiskDeliveryAddress()
@@ -69,9 +62,14 @@ public struct OBRiskLocal<OBRiskApi: OBRiskApiProtocol>: Codable {
 
 }
 public extension OBRiskApiProtocol {
-    func obRiskLocal() -> OBRiskLocal<Self> {
-        OBRiskLocal.init(
-            paymentContextCode: OBRiskLocal.PaymentContextCode(rawValue: paymentContextCode!.rawValue)!,
+    func obRiskLocal() throws -> OBRiskLocal<Self> {
+        guard
+            let paymentContextCode = paymentContextCodeEnum
+            else {
+                throw "Invalid enum value received from OB API"
+        }
+        return OBRiskLocal<Self>.init(
+            paymentContextCode: paymentContextCode,
             merchantCategoryCode: merchantCategoryCode,
             merchantCustomerIdentification: merchantCustomerIdentification,
             deliveryAddress: deliveryAddress?.obRiskDeliveryAddressLocal()

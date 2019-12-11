@@ -15,6 +15,6 @@ import Foundation
 public protocol OBWritePaymentConsentLocalProtocol: Codable {
     associatedtype OBWritePaymentConsentApi: OBWritePaymentConsentApiProtocol
     associatedtype OBWritePaymentApi: OBWritePaymentApiProtocol
-    func obWritePaymentConsentApi() -> OBWritePaymentConsentApi
-    func obWritePaymentApi(consentId: String) -> OBWritePaymentApi
+    func obWritePaymentConsentApi() throws -> OBWritePaymentConsentApi
+    func obWritePaymentApi(consentId: String) throws -> OBWritePaymentApi
 }

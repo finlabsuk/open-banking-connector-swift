@@ -17,8 +17,6 @@ import NIOFoundationCompat
 import AsyncHTTPClient
 import SQLKit
 
-let decoder = JSONDecoder()
-
 func endpointHandlerPostRegister(
     context: ChannelHandlerContext,
     request: HTTPServerRequestPart,
@@ -36,11 +34,12 @@ func endpointHandlerPostRegister(
         // Validate request data
         let obClientProfilePublic: OBClientProfilePublic
         do {
-            let data = buffer.readData(length: buffer.readableBytes)!
-            if data.isEmpty {
+            let bufferData = buffer.readData(length: buffer.readableBytes)!
+            //print(String(decoding: bufferData, as: UTF8.self))
+            if bufferData.isEmpty {
                 throw("No body data received in request")
             }
-            obClientProfilePublic = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBClientProfilePublic.self, from: data)
+            obClientProfilePublic = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBClientProfilePublic.self, from: bufferData)
         } catch {
             let errorBody = ErrorPublic(error: "\(error)")
             responseCallback(
@@ -139,7 +138,6 @@ func endpointHandlerPostRegister(
                     .internalServerError,
                     try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
                 )
-                return
             })
         
     }

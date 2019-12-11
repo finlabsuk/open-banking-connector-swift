@@ -201,7 +201,7 @@ struct OBClientProfile: StoredItem {
                 if response.status == .ok,
                     var body = response.body {
                     let data = body.readData(length: body.readableBytes)!
-                    let responseObject = try decoder.decode(
+                    let responseObject = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(
                         OBTokenEndpointResponse.self,
                         from: data)
                     print(response.status.code)

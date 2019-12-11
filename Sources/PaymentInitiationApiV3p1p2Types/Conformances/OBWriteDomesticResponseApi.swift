@@ -21,8 +21,8 @@ extension OBWriteDomesticResponseApi: OBWriteDomesticResponseApiProtocol {
     public var metaOptional: Meta? { return meta }
 }
 extension OBWriteDomesticResponseDataApi: OBWriteDomesticResponseDataApiProtocol {
-    public var statusEnum: OBWriteDomesticResponseDataApiStatusEnum? {
-        return OBWriteDomesticResponseDataApiStatusEnum(rawValue: status.rawValue)
+    public var statusEnum: OBWritePaymentResponseDataApiStatusEnum? {
+        return OBWritePaymentResponseDataApiStatusEnum(rawValue: status.rawValue)
     }
 }
 extension OBWriteDomesticResponseDataMultiAuthorisationApi: OBWriteDomesticResponseDataMultiAuthorisationApiProtocol {

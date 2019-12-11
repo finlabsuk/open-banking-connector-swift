@@ -159,7 +159,7 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                 if response.status == .created,
                     var body = response.body {
                     let data = body.readData(length: body.readableBytes)!
-                    var responseObject = try decoder.decode(
+                    var responseObject = try hcm.jsonDecoderDateFormatSecondsSince1970.decode(
                         OBClientRegistrationResponse.self,
                         from: data)
                     responseObject.applyOverrides(overrides: obClientRegistrationResponseOverrides)

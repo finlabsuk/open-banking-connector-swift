@@ -25,10 +25,14 @@ extension OBWriteDomesticConsentResponseApi: OBWriteDomesticConsentResponseApiPr
 extension Links: LinksApiProtocol { }
 extension Meta: MetaApiProtocol { }
 extension OBWriteDomesticConsentResponseDataType: OBWriteDomesticConsentResponseDataApiProtocol {
-    public var statusEnum: OBWriteDomesticConsentResponseDataApiStatus? {
-        return OBWriteDomesticConsentResponseDataApiStatus(rawValue: status.rawValue)
+    public var statusEnum: OBWritePaymentConsentResponseDataApiStatusEnum? {
+        return OBWritePaymentConsentResponseDataApiStatusEnum(rawValue: status.rawValue)
     }
 }
-extension OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol { }
+extension OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol {
+    public var chargeBearerEnum: OBChargeBearerTypeCodeEnum? {
+        return OBChargeBearerTypeCodeEnum(rawValue: chargeBearer.rawValue)
+    }
+}
 extension OBActiveOrHistoricCurrencyAndAmount: OBActiveOrHistoricCurrencyAndAmountApiProtocol { }
 

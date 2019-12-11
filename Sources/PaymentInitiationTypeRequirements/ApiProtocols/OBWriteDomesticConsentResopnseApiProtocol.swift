@@ -39,21 +39,21 @@ public protocol OBWritePaymentConsentResponseApiProtocol: Codable {
 
 public protocol OBWriteDomesticConsentResponseApiProtocol: OBWritePaymentConsentResponseApiProtocol where OBWritePaymentConsentResponseData: OBWriteDomesticConsentResponseDataApiProtocol { }
 
-public protocol OBWritePaymentConsentResponseDataApiProtocol: Codable {
-    associatedtype StatusEnum: RawRepresentable, Codable where StatusEnum.RawValue == String
-    /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
-    var consentId: String { get }
-    var statusEnum: StatusEnum? { get }
-}
-
-public enum OBWriteDomesticConsentResponseDataApiStatus: String, Codable {
+public enum OBWritePaymentConsentResponseDataApiStatusEnum: String, Codable {
     case authorised = "Authorised"
     case awaitingAuthorisation = "AwaitingAuthorisation"
     case consumed = "Consumed"
     case rejected = "Rejected"
 }
 
-public protocol OBWriteDomesticConsentResponseDataApiProtocol: OBWritePaymentConsentResponseDataApiProtocol where StatusEnum == OBWriteDomesticConsentResponseDataApiStatus {
+public protocol OBWritePaymentConsentResponseDataApiProtocol: Codable {
+    /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
+    var consentId: String { get }
+    /** Specifies the status of consent resource in code form. */
+    var statusEnum: OBWritePaymentConsentResponseDataApiStatusEnum? { get }
+}
+
+public protocol OBWriteDomesticConsentResponseDataApiProtocol: OBWritePaymentConsentResponseDataApiProtocol {
     associatedtype OBWriteDomesticConsentResponseDataCharges: OBWriteDomesticConsentResponseDataChargesApiProtocol
     associatedtype OBWriteDomesticDataInitiation: OBWriteDomesticDataInitiationProtocol
     associatedtype OBWriteDomesticConsentDataAuthorisation: OBWriteDomesticConsentDataAuthorisationProtocol
@@ -66,7 +66,6 @@ public protocol OBWriteDomesticConsentResponseDataApiProtocol: OBWritePaymentCon
     var creationDateTime: Date { get }
     /** Specifies the status of consent resource in code form. */
     var status: Status { get }
-    var statusEnum: OBWriteDomesticConsentResponseDataApiStatus? { get }
     /** Date and time at which the resource status was updated.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
     var statusUpdateDateTime: Date { get }
     /** Specified cut-off date and time for the payment consent.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
@@ -81,10 +80,19 @@ public protocol OBWriteDomesticConsentResponseDataApiProtocol: OBWritePaymentCon
     var sCASupportData: OBWriteDomesticConsentDataSCASupportData? { get }
 }
 
-public protocol OBWriteDomesticConsentResponseDataChargesApiProtocol: Codable {
+/** Specifies which party/parties will bear the charges associated with the processing of the payment transaction. */
+public enum OBChargeBearerTypeCodeEnum: String, Codable {
+    case borneByCreditor = "BorneByCreditor"
+    case borneByDebtor = "BorneByDebtor"
+    case followingServiceLevel = "FollowingServiceLevel"
+    case shared = "Shared"
+}
+
+public protocol  OBWriteDomesticConsentResponseDataChargesApiProtocol: Codable {
     associatedtype OBChargeBearerTypeCode: RawRepresentable, Codable where OBChargeBearerTypeCode.RawValue == String
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountApiProtocol
     var chargeBearer: OBChargeBearerTypeCode { get }
+    var chargeBearerEnum: OBChargeBearerTypeCodeEnum? { get }
     var type: String { get } //OBExternalPaymentChargeType1Code
     var amount: OBActiveOrHistoricCurrencyAndAmountType { get }
 }

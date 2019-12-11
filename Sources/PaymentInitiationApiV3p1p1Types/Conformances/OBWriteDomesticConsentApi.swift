@@ -10,6 +10,7 @@
 //
 // ********************************************************************************
 
+import Foundation
 import PaymentInitiationTypeRequirements
 import BaseServices
 
@@ -57,7 +58,44 @@ extension OBWriteDomesticDataInitiationCreditorAccountType: OBWriteDomesticDataI
 }
 extension OBWriteDomesticDataInitiationRemittanceInformationType: OBWriteDomesticDataInitiationRemittanceInformationProtocol { }
 
-extension OBWriteDomesticConsentDataAuthorisationType: OBWriteDomesticConsentDataAuthorisationProtocol { }
+extension OBWriteDomesticConsentDataAuthorisationType: OBWriteDomesticConsentDataAuthorisationProtocol {
+    public var authorisationTypeEnum: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum? {
+        return OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum(rawValue: authorisationType.rawValue)
+    }
+    
+    public init(authorisationType: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum, completionDateTime: Date?) throws {
+        guard let authorisationType = AuthorisationType(rawValue: authorisationType.rawValue) else {
+            throw "Invalid enum field for OB API version"
+        }
+        self.init(authorisationType: authorisationType, completionDateTime: completionDateTime)
+    }
+}
 
-extension OBRiskApi: OBRiskApiProtocol { }
+extension OBRiskApi: OBRiskApiProtocol {
+    public var paymentContextCodeEnum: OBRiskApiPaymentContextCodeEnum?? {
+        get {
+            if let paymentContextCode = paymentContextCode {
+                return .some(
+                    OBRiskApiPaymentContextCodeEnum(rawValue: paymentContextCode.rawValue)
+                )
+            }
+            return .none
+        }
+    }
+    
+    public init(paymentContextCode: OBRiskApiPaymentContextCodeEnum?, merchantCategoryCode: String?, merchantCustomerIdentification: String?, deliveryAddress: OBRisk1DeliveryAddress?) throws {
+        let paymentContextCodeNew: PaymentContextCode?
+        switch paymentContextCode {
+        case .none:
+            paymentContextCodeNew = .none
+        case .some(let value):
+            guard let newValue = PaymentContextCode(rawValue: value.rawValue)
+                else {
+                    throw "Invalid enum field for OB API version"
+            }
+            paymentContextCodeNew = .some(newValue)
+        }
+        self.init(paymentContextCode: paymentContextCodeNew, merchantCategoryCode: merchantCategoryCode, merchantCustomerIdentification: merchantCustomerIdentification, deliveryAddress: deliveryAddress)
+    }
+}
 extension OBRiskDeliveryAddress: OBRiskDeliveryAddressProtocol { }

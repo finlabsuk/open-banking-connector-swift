@@ -38,6 +38,7 @@ func endpointHandlerPostPaymentInitiationPayment(
         
         let bufferData = buffer.readData(length: buffer.readableBytes)!
         //print(String(decoding: bufferData, as: UTF8.self))
+        
         var obClientProfile: OBClientProfile!
         var consent: PaymentInitiationDomesticConsent!
         
@@ -79,6 +80,7 @@ func endpointHandlerPostPaymentInitiationPayment(
                 
                 class ProcessingBlock: PaymentInitiationProcesingBlock_OBWritePaymentConsentLocal {
                     typealias InputType = (
+                        context: ChannelHandlerContext,
                         requestObjectVariety: PaymentInitiationPaymentVariety,
                         bufferData: Data,
                         regexMatch: [String],
@@ -90,19 +92,31 @@ func endpointHandlerPostPaymentInitiationPayment(
                     static func executeInner<OBWritePaymentConsentLocal: OBWritePaymentConsentLocalProtocol>(
                         dynamicType: OBWritePaymentConsentLocal.Type,
                         input: InputType
-                    ) throws -> OutputType {
+                    ) -> OutputType {
                         typealias OBWritePaymentResponseApi = OBWritePaymentConsentLocal.OBWritePaymentApi.ResponseApi
                         
+                        var responseAPI: OBWritePaymentResponseApi!
                         var payment: PaymentInitiationDomestic!
                         
-                        // Prepare data
-                        let requestObjectLocal: OBWritePaymentConsentLocal = try! hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBWritePaymentConsentLocal.self, from: input.bufferData)
-                        let consentId = input.consent.obRequestObjectClaims.claims.userinfo.openbanking_intent_id.value!
-                        let requestObjectApi = requestObjectLocal.obWritePaymentApi(consentId: consentId)
-                        let requestObjectApiData = try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(requestObjectApi)
+                        // Validate request data
+                        let requestObjectApi: OBWritePaymentConsentLocal.OBWritePaymentApi
+                        do {
+                            if input.bufferData.isEmpty {
+                                throw("No body data received in request")
+                            }
+                            let requestObjectPublic = try hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(OBWritePaymentConsentLocal.self, from: input.bufferData)
+                            let consentID = input.consent.obRequestObjectClaims.claims.userinfo.openbanking_intent_id.value!
+                            requestObjectApi = try requestObjectPublic.obWritePaymentApi(consentId: consentID)
+                        } catch {
+                            let errorBody = ErrorPublic(error: "\(error)")
+                            input.responseCallback(
+                                .badRequest,
+                                try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
+                            )
+                            return input.context.eventLoop.makeSucceededFuture(())
+                        }
                         
-                        // Generate URL
-                        let url = URL(string: input.obClientProfile.paymentInitiationAPISettings.obBaseURL + input.regexMatch[0])!
+                        // Generate JWS
                         return genJws(
                             softwareStatementId: input.obClientProfile.softwareStatementProfileId,
                             claims: requestObjectApi,
@@ -113,6 +127,8 @@ func endpointHandlerPostPaymentInitiationPayment(
                             .flatMap({ jws -> EventLoopFuture<OBWritePaymentResponseApi> in
                                 let jwsComponents = jws.components(separatedBy: ".")
                                 let jwsSignature = "\(jwsComponents[0])..\(jwsComponents[2])"
+                                let url = URL(string: input.obClientProfile.paymentInitiationAPISettings.obBaseURL + input.regexMatch[0])!
+                                let requestObjectApiData = try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(requestObjectApi)
                                 return hcm.httpPost(
                                     url: url,
                                     headers: [
@@ -128,10 +144,9 @@ func endpointHandlerPostPaymentInitiationPayment(
                             
                             // Save payment
                             .flatMap({
-                                responseObject in
-                                print(responseObject)
                                 
                                 // Create paymnet
+                                responseAPI = $0
                                 payment = PaymentInitiationDomestic(
                                     softwareStatementProfileId: input.obClientProfile.softwareStatementProfileId,
                                     issuerURL: input.obClientProfile.issuerURL,
@@ -142,24 +157,32 @@ func endpointHandlerPostPaymentInitiationPayment(
                             
                             // Send success response
                             .flatMapThrowing({ () in
-                                let response = PostConsentResponse(authURL: "", consentId: input.consent.id)
-                                let returnJson = try! JSONEncoder().encode(response)
-                                input.responseCallback(.created, returnJson)
+                                let successBody = responseAPI.obWritePaymentResponsePublic(
+                                    paymentID: payment.id
+                                )
+                                input.responseCallback(
+                                    .created,
+                                    try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(successBody)
+                                )
                             })
                         
                     }
                 }
                 
-                return try! ProcessingBlock.execute(
+                return ProcessingBlock.execute(
                     obClientProfile.paymentInitiationAPISettings.apiVersion,
                     requestObjectVariety,
-                    (requestObjectVariety, bufferData, regexMatch, obClientProfile, consent, responseCallback)
+                    (context, requestObjectVariety, bufferData, regexMatch, obClientProfile, consent, responseCallback)
                 )
             })
             
             // Send failure response
-            .whenFailure({
-                error in responseCallback(.internalServerError, try! JSONEncoder().encode("\(error)"))
+            .whenFailure({ error in
+                let errorBody = ErrorPublic(error: "\(error)")
+                responseCallback(
+                    .internalServerError,
+                    try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(errorBody)
+                )
             })
     }
 }

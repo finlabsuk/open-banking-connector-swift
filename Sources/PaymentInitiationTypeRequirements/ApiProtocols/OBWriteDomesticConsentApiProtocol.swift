@@ -110,21 +110,45 @@ public protocol OBWriteDomesticDataInitiationRemittanceInformationProtocol {
     )
 }
 
+public enum OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum: String, Codable {
+    case any = "Any"
+    case single = "Single"
+}
 public protocol OBWriteDomesticConsentDataAuthorisationProtocol: Codable {
     associatedtype AuthorisationType: RawRepresentable, Codable where AuthorisationType.RawValue == String
     var authorisationType: AuthorisationType { get }
+    var authorisationTypeEnum: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum? { get }
     var completionDateTime: Date? { get }
     init(
-        authorisationType: AuthorisationType,
+        authorisationType: OBWriteDomesticConsentDataAuthorisationProtocolAuthorisationTypeEnum,
         completionDateTime: Date?
-    )
+    ) throws
 }
 
+public enum OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum: String, Codable {
+    case billPayment = "BillPayment"
+    case contactlessTravel = "ContactlessTravel"
+    case ecommerceGoods = "EcommerceGoods"
+    case ecommerceServices = "EcommerceServices"
+    case kiosk = "Kiosk"
+    case parking = "Parking"
+    case partyToParty = "PartyToParty"
+}
+public enum OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum: String, Codable {
+    case ca = "CA"
+    case sca = "SCA"
+}
 public protocol OBWriteDomesticConsentDataSCASupportDataProtocol: Codable {
     associatedtype RequestedSCAExemptionType: RawRepresentable, Codable where RequestedSCAExemptionType.RawValue == String
     associatedtype AppliedAuthenticationApproach: RawRepresentable, Codable where AppliedAuthenticationApproach.RawValue == String
     var requestedSCAExemptionType: RequestedSCAExemptionType? { get }
+    var requestedSCAExemptionTypeEnum: OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum?? { get }
     var appliedAuthenticationApproach: AppliedAuthenticationApproach? { get }
+    var appliedAuthenticationApproachEnum: OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum?? { get }
     var referencePaymentOrderId: String? { get }
-    init(requestedSCAExemptionType: RequestedSCAExemptionType?, appliedAuthenticationApproach: AppliedAuthenticationApproach?, referencePaymentOrderId: String?)
+    init(
+        requestedSCAExemptionType: OBWriteDomesticConsentDataSCASupportDataProtocolRequestedSCAExemptionTypeEnum?,
+        appliedAuthenticationApproach: OBWriteDomesticConsentDataSCASupportDataProtocolAppliedAuthenticationApproachEnum?,
+        referencePaymentOrderId: String?
+    ) throws
 }

@@ -118,8 +118,8 @@ public struct OBWriteDomesticConsentResponseLocal<
     
 }
 public extension OBWriteDomesticConsentResponseApiProtocol {
-    func obWriteDomesticConsentResponseLocal() -> OBWriteDomesticConsentResponseLocal<Self> {
-        OBWriteDomesticConsentResponseLocal.init(
+    func obWriteDomesticConsentResponseLocal() throws -> OBWriteDomesticConsentResponseLocal<Self> {
+        try OBWriteDomesticConsentResponseLocal.init(
             data: data.obWriteDomesticConsentResponseDataLocal(),
             risk: risk.obRiskLocal(),
             links: linksOptional?.linksLocal(),
@@ -132,18 +132,12 @@ public extension OBWriteDomesticConsentResponseApiProtocol {
 public struct OBWriteDomesticConsentResponseDataLocal<
     OBWriteDomesticConsentResponseDataApi: OBWriteDomesticConsentResponseDataApiProtocol>: Codable {
 
-    public enum Status: String, Codable {
-        case authorised = "Authorised"
-        case awaitingAuthorisation = "AwaitingAuthorisation"
-        case consumed = "Consumed"
-        case rejected = "Rejected"
-    }
     /** OB: Unique identification as assigned by the ASPSP to uniquely identify the consent resource. */
     public var consentId: String
     /** Date and time at which the resource was created.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
     public var creationDateTime: Date
     /** Specifies the status of consent resource in code form. */
-    public var status: Status
+    public var status: OBWritePaymentConsentResponseDataApiStatusEnum
     /** Date and time at which the resource status was updated.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
     public var statusUpdateDateTime: Date
     /** Specified cut-off date and time for the payment consent.All dates in the JSON payloads are represented in ISO 8601 date-time format.  All date-time fields in responses must include the timezone. An example is below: 2017-04-05T10:43:07+00:00 */
@@ -160,7 +154,7 @@ public struct OBWriteDomesticConsentResponseDataLocal<
     public init(
         consentId: String,
         creationDateTime: Date,
-        status: Status,
+        status: OBWritePaymentConsentResponseDataApiStatusEnum,
         statusUpdateDateTime: Date,
         cutOffDateTime: Date?,
         expectedExecutionDateTime: Date?,
@@ -199,16 +193,21 @@ public struct OBWriteDomesticConsentResponseDataLocal<
 
 }
 public extension OBWriteDomesticConsentResponseDataApiProtocol {
-    func obWriteDomesticConsentResponseDataLocal() -> OBWriteDomesticConsentResponseDataLocal<Self> {
-        OBWriteDomesticConsentResponseDataLocal.init(
+    func obWriteDomesticConsentResponseDataLocal() throws -> OBWriteDomesticConsentResponseDataLocal<Self> {
+        guard
+            let status = statusEnum
+            else {
+                throw "Invalid enum value received from OB API"
+        }
+        return try OBWriteDomesticConsentResponseDataLocal.init(
             consentId: consentId,
             creationDateTime: creationDateTime,
-            status: OBWriteDomesticConsentResponseDataLocal.Status.init(rawValue: status.rawValue)!,
+            status: status,
             statusUpdateDateTime: statusUpdateDateTime,
             cutOffDateTime: cutOffDateTime,
             expectedExecutionDateTime: expectedExecutionDateTime,
             expectedSettlementDateTime: expectedSettlementDateTime,
-            charges: charges?.map { $0.obWriteDomesticConsentResponseDataChargesLocal() },
+            charges: charges?.map { try $0.obWriteDomesticConsentResponseDataChargesLocal() },
             initiation: initiation.obWriteDomesticDataInitiationLocal(),
             authorisation: authorisation?.obWriteDomesticConsentDataAuthorisationLocal(),
             sCASupportData: nil
@@ -217,31 +216,12 @@ public extension OBWriteDomesticConsentResponseDataApiProtocol {
     }
 }
 
-/** Specifies which party/parties will bear the charges associated with the processing of the payment transaction. */
-public enum OBChargeBearerTypeCodeLocal: String, Codable {
-    case borneByCreditor = "BorneByCreditor"
-    case borneByDebtor = "BorneByDebtor"
-    case followingServiceLevel = "FollowingServiceLevel"
-    case shared = "Shared"
-
-}
-
 /** Set of elements used to provide details of a charge for the payment initiation. */
 public struct OBWriteDomesticConsentResponseDataChargesLocal<OBWriteDomesticConsentResponseDataChargesApi: OBWriteDomesticConsentResponseDataChargesApiProtocol>: Codable {
 
-    public var chargeBearer: OBChargeBearerTypeCodeLocal
+    public var chargeBearer: OBChargeBearerTypeCodeEnum
     public var type: String //OBExternalPaymentChargeTypeCode
     public var amount: OBActiveOrHistoricCurrencyAndAmountLocal
-
-    public init(
-        chargeBearer: OBChargeBearerTypeCodeLocal,
-        type: String,
-        amount: OBActiveOrHistoricCurrencyAndAmountLocal
-    ) {
-        self.chargeBearer = chargeBearer
-        self.type = type
-        self.amount = amount
-    }
 
     public enum CodingKeys: String, CodingKey {
         case chargeBearer = "ChargeBearer"
@@ -251,10 +231,15 @@ public struct OBWriteDomesticConsentResponseDataChargesLocal<OBWriteDomesticCons
 
 }
 public extension OBWriteDomesticConsentResponseDataChargesApiProtocol {
-    func obWriteDomesticConsentResponseDataChargesLocal() -> OBWriteDomesticConsentResponseDataChargesLocal<Self> {
-        OBWriteDomesticConsentResponseDataChargesLocal.init(
+    func obWriteDomesticConsentResponseDataChargesLocal() throws -> OBWriteDomesticConsentResponseDataChargesLocal<Self> {
+        guard
+            let chargeBearer = chargeBearerEnum
+            else {
+                throw "Invalid enum value received from OB API"
+        }
+        return OBWriteDomesticConsentResponseDataChargesLocal<Self>.init(
             chargeBearer:
-            OBChargeBearerTypeCodeLocal.init(rawValue: chargeBearer.rawValue)!,
+            chargeBearer,
             type: type,
             amount: amount.obActiveOrHistoricCurrencyAndAmountLocal()
         )
