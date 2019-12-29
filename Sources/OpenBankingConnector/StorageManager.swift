@@ -13,10 +13,12 @@
 import Foundation
 import SQLiteKit
 
+extension EventLoopGroupConnectionPool where Source.Connection == SQLiteConnection { }
+
 /// Class for persisting data to local storage. Uses SQLite.
 final class StorageManager {
     
-    var db = ThreadSpecificVariable<ConnectionPool<SQLiteConnectionSource>>()
+    var pool: EventLoopGroupConnectionPool<SQLiteConnectionSource>
     
     let jsonEncoderDateFormatISO8601WithMilliSeconds: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatISO8601WithMilliSeconds: JSONDecoder = JSONDecoder()
@@ -41,26 +43,21 @@ final class StorageManager {
             return date
         })
         
-        eventLoopGroup.makeIterator().forEach { eventLoop in
-            try! eventLoop.submit({
-                let source = SQLiteConnectionSource(
-                    configuration: .init(storage: .connection(.file(path: file))), // creates file if missing?
-                    threadPool: threadPool
-                )
-                let pool = ConnectionPool(configuration: .init(maxConnections: 8), source: source, on: eventLoop)
-                self.db.currentValue = pool
-            }).wait()
-        }
+        let source = SQLiteConnectionSource(
+            configuration: .init(storage: .connection(.file(path: file))), // creates file if missing?
+            threadPool: threadPool
+        )
+        pool = EventLoopGroupConnectionPool<SQLiteConnectionSource>(
+            source: source,
+            maxConnectionsPerEventLoop: 8,
+            logger: .init(label: "codes.vapor.pool"),
+            on: eventLoopGroup
+        )
         
     }
     
     deinit {
-        eventLoopGroup.makeIterator().forEach { eventLoop in
-            try! eventLoop.makeSucceededFuture(())
-                .flatMapThrowing({_ in
-                    self.db.currentValue!.shutdown()
-                }).wait()
-        }
+        pool.shutdown()
     }
     
     /// Creates the tables (if they don't exist), drops the tables beforehand if dropTables is true.
@@ -80,7 +77,7 @@ final class StorageManager {
             }
             currentFuture = currentFuture
                 .flatMap({
-                    //print(self.db.currentValue!)
+                    //print(self.pool.currentValue!)
                     //print(self.dbThreadPool.currentValue!)
                     return type.createTable()
                 })

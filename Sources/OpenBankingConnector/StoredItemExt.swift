@@ -53,30 +53,34 @@ extension StoredItem {
     }
     
     static func dropTable() -> EventLoopFuture<Void> {
-        return sm.db.currentValue!.drop(table: tableName)
-            .ifExists()
-            .run()
-            .flatMapError({error in
-                print(error)
-                fatalError()
-            })
+        return sm.pool.withConnection { conn in
+            conn.sql().drop(table: tableName)
+                .ifExists()
+                .run()
+                .flatMapError({error in
+                    print(error)
+                    fatalError()
+                })
+        }
     }
     
     static func createTable() -> EventLoopFuture<Void> {
-        return sm.db.currentValue!.create(table: tableName)
-            .ifNotExists()
-            .column("id", type: .text, .primaryKey(autoIncrement: false)) // need to add .notNull
-            .column("softwareStatementProfileId", type: .text, .notNull)
-            .column("issuerURL", type: .text)
-            .column("obClientId", type: .text)
-            .column("userId", type: .text)
-            .column("state", type: .text)
-            .column("json", type: .text, .notNull)
-            .run()
-            .flatMapError({error in
-                print(error)
-                fatalError()
-            })
+        return sm.pool.withConnection { conn in
+            conn.sql().create(table: tableName)
+                .ifNotExists()
+                .column("id", type: .text, .primaryKey(autoIncrement: false)) // need to add .notNull
+                .column("softwareStatementProfileId", type: .text, .notNull)
+                .column("issuerURL", type: .text)
+                .column("obClientId", type: .text)
+                .column("userId", type: .text)
+                .column("state", type: .text)
+                .column("json", type: .text, .notNull)
+                .run()
+                .flatMapError({error in
+                    print(error)
+                    fatalError()
+                })
+        }
     }
     
     static func load(
@@ -85,16 +89,18 @@ extension StoredItem {
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
     ) -> EventLoopFuture<[Self]> {
         
-        var builder = sm.db.currentValue!.select()
-            .column(SQLRaw("json"))
-            .from(self.tableName)
-        if let id = id {
-            builder = builder.where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+        let futureOnDBEventLoop = sm.pool.withConnection { conn -> EventLoopFuture<[SQLRow]> in
+            var builder = conn.sql().select()
+                .column(SQLRaw("json"))
+                .from(self.tableName)
+            if let id = id {
+                builder = builder.where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+            }
+            if let state = state {
+                builder = builder.where(SQLColumn(SQLRaw("state")), .equal, SQLBind(state))
+            }
+            return builder.all()
         }
-        if let state = state {
-            builder = builder.where(SQLColumn(SQLRaw("state")), .equal, SQLBind(state))
-        }
-        let futureOnDBEventLoop = builder.all()
         return futureOnDBEventLoop
             .hop(to: eventLoop)
             .flatMapThrowing({ rowArray -> [Self] in
@@ -119,13 +125,15 @@ extension StoredItem {
     static func load(
         id: String,
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
-        ) -> EventLoopFuture<Self> {
+    ) -> EventLoopFuture<Self> {
         
-        let futureOnDBEventLoop = sm.db.currentValue!.select()
-            .column(SQLRaw("json"))
-            .from(self.tableName)
-            .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
-            .all()
+        let futureOnDBEventLoop = sm.pool.withConnection { conn -> EventLoopFuture<[SQLRow]> in
+            return conn.sql().select()
+                .column(SQLRaw("json"))
+                .from(self.tableName)
+                .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+                .all()
+        }
         return futureOnDBEventLoop
             .hop(to: eventLoop)
             .flatMapThrowing({ rowArray -> Self in
@@ -147,32 +155,36 @@ extension StoredItem {
     
     func insert() -> EventLoopFuture<Void> {
         print(tableNameTmp)
-        return sm.db.currentValue!.insert(into: tableNameTmp)
+        return sm.pool.withConnection { conn in
+            conn.sql().insert(into: self.tableNameTmp)
             .columns("id", "softwareStatementProfileId", "issuerURL", "obClientId", "userId", "state", "json")
-            .values(SQLBind(id), SQLBind(softwareStatementProfileId), SQLBind(issuerURL), SQLBind(obClientId), SQLBind(userId), SQLBind(state),
+                .values(SQLBind(self.id), SQLBind(self.softwareStatementProfileId), SQLBind(self.issuerURL), SQLBind(self.obClientId), SQLBind(self.userId), SQLBind(self.state),
                     SQLBind(self.encodeString()))
             .run()
             .flatMapError({error in
                 print(error)
                 fatalError()
             })
+        }
     }
     
     func update() -> EventLoopFuture<Void> {
-        sm.db.currentValue!.update(tableNameTmp)
-            .set("id", to: id)
-            .set("softwareStatementProfileId", to: softwareStatementProfileId)
-            .set("issuerURL", to: issuerURL)
-            .set("obClientId", to: obClientId)
-            .set("userId", to: userId)
-            .set("state", to: state)
-            .set("json", to: self.encodeString())
-            .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
-            .run()
-            .flatMapError({error in
-                print(error)
-                fatalError()
-            })
+        sm.pool.withConnection { conn in
+            conn.sql().update(self.tableNameTmp)
+                .set("id", to: self.id)
+                .set("softwareStatementProfileId", to: self.softwareStatementProfileId)
+                .set("issuerURL", to: self.issuerURL)
+                .set("obClientId", to: self.obClientId)
+                .set("userId", to: self.userId)
+                .set("state", to: self.state)
+                .set("json", to: self.encodeString())
+                .where(SQLColumn(SQLRaw("id")), .equal, SQLBind(self.id))
+                .run()
+                .flatMapError({error in
+                    print(error)
+                    fatalError()
+                })
+        }
     }
     
     /// Encode JSON (gets around bug that stops direct use in other places)

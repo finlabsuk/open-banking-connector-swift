@@ -129,19 +129,21 @@ struct OBClientProfile: StoredItem {
         on eventLoop: EventLoop = MultiThreadedEventLoopGroup.currentEventLoop!
     ) -> EventLoopFuture<[OBClientProfile]> {
         
-        var builder = sm.db.currentValue!.select()
-            .column(SQLRaw("json"))
-            .from(self.tableName)
-        if let id = id {
-            builder = builder.where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+        let futureOnDBEventLoop = sm.pool.withConnection { conn -> EventLoopFuture<[SQLRow]> in
+            var builder = conn.sql().select()
+                .column(SQLRaw("json"))
+                .from(self.tableName)
+            if let id = id {
+                builder = builder.where(SQLColumn(SQLRaw("id")), .equal, SQLBind(id))
+            }
+            if let softwareStatementProfileId = softwareStatementProfileId {
+                builder = builder.where(SQLColumn(SQLRaw("softwareStatementProfileId")), .equal, SQLBind(softwareStatementProfileId))
+            }
+            if let issuerURL = issuerURL {
+                builder = builder.where(SQLColumn(SQLRaw("issuerURL")), .equal, SQLBind(issuerURL))
+            }
+            return builder.all()
         }
-        if let softwareStatementProfileId = softwareStatementProfileId {
-            builder = builder.where(SQLColumn(SQLRaw("softwareStatementProfileId")), .equal, SQLBind(softwareStatementProfileId))
-        }
-        if let issuerURL = issuerURL {
-            builder = builder.where(SQLColumn(SQLRaw("issuerURL")), .equal, SQLBind(issuerURL))
-        }
-        let futureOnDBEventLoop = builder.all()
         return futureOnDBEventLoop
             .hop(to: eventLoop)
             .flatMapThrowing({ rowArray -> [OBClientProfile] in
