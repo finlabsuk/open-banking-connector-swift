@@ -15,7 +15,11 @@ import BaseServices
 
 // MARK:- Supporting protocols
 
-public protocol RawRepresentableWithStringRawValue: RawRepresentable where RawValue == String { }
+/** Indicates whether the transaction is a credit or a debit entry. */
+public enum OBCreditDebitCodeEnum: String, Codable {
+    case credit = "Credit"
+    case debit = "Debit"
+}
 
 public protocol OBActiveOrHistoricCurrencyAndAmountProtocol {
     var amount: String {get}
@@ -23,9 +27,10 @@ public protocol OBActiveOrHistoricCurrencyAndAmountProtocol {
 }
 
 public protocol OBTransactionCashBalanceProtocol {
-    associatedtype CreditDebitIndicatorType: RawRepresentableWithStringRawValue
+    associatedtype OBCreditDebitCode: RawRepresentable, Codable where OBCreditDebitCode.RawValue == String
     var nestedAmount: String {get}
-    var creditDebitIndicator: CreditDebitIndicatorType {get}
+    var creditDebitIndicator: OBCreditDebitCode {get}
+    var creditDebitIndicatorEnum: OBCreditDebitCodeEnum? {get}
 }
 
 public protocol OBStatementDateTimeProtocol {
@@ -33,18 +38,18 @@ public protocol OBStatementDateTimeProtocol {
 }
 
 public protocol OBStatementAmountProtocol {
-    associatedtype CreditDebitIndicatorType: RawRepresentableWithStringRawValue
+    associatedtype CreditDebitIndicator: RawRepresentable, Codable where CreditDebitIndicator.RawValue == String
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     var amount: OBActiveOrHistoricCurrencyAndAmountType {get}
-    var creditDebitIndicator: CreditDebitIndicatorType {get}
+    var creditDebitIndicator: CreditDebitIndicator {get}
 }
 
 // MARK:- General protocols for all OB Account Information resources (including Read, ReadData, and Base levels)
 
 // NEW: Top-level protocols with more flexibility
-public protocol OBATApiReadResourceProtocol: Codable {
-    associatedtype OBATApiReadResourceDataType: OBATApiReadResourceDataProtocol
-    var data: OBATApiReadResourceDataType { get set }
+public protocol OBReadResourceProtocol: Codable {
+    associatedtype OBReadResourceData: OBReadResourceDataProtocol
+    var data: OBReadResourceData { get set }
 }
 
 //extension NewOBAIReadResourceProtocol {
@@ -58,35 +63,35 @@ public protocol OBATApiReadResourceProtocol: Codable {
 //}
 
 
-public protocol OBATApiReadResourceDataProtocol {
-    associatedtype OBATApiResourceType: OBATApiResourceProtocol
-    var resource: [OBATApiResourceType]? { get }
+public protocol OBReadResourceDataProtocol {
+    associatedtype OBResource: OBResourceProtocol
+    var resource: [OBResource]? { get }
 }
 
 // Protocol below for spec-version independent OB resource (e.g OBAccount3, OBTransaction5, etc) description.
-public protocol OBATApiResourceProtocol: Codable { }
+public protocol OBResourceProtocol: Codable { }
 
-public protocol OBATApiReadResourceTypesProtocol {
-    associatedtype OBATApiReadTransactionType: OBATApiReadTransactionProtocol
-    associatedtype OBATApiReadAccountType: OBATApiReadAccountProtocol
+public protocol OBReadResourceTypesProtocol {
+    associatedtype OBReadTransactionType: OBReadTransactionProtocol
+    associatedtype OBReadAccountType: OBReadAccountProtocol
 }
 
 public protocol AccountTransactionRequestObjectApiTypesProtocol {
-    associatedtype OBReadConsentApiType: OBReadConsentApiProtocol
+    associatedtype OBReadConsentType: OBReadConsentProtocol
 }
 
 // MARK:- Direct debit type protocols
 
-public protocol OBATApiReadDirectDebitDataProtocol: OBATApiReadResourceDataProtocol {
-    var directDebit: [OBATApiResourceType]? { get }
+public protocol OBATApiReadDirectDebitDataProtocol: OBReadResourceDataProtocol {
+    var directDebit: [OBResource]? { get }
 }
 extension OBATApiReadDirectDebitDataProtocol {
-    public var resource: [OBATApiResourceType]? { return directDebit }
+    public var resource: [OBResource]? { return directDebit }
 }
 
-public protocol OBATApiDirectDebitProtocol: OBATApiResourceProtocol {
+public protocol OBATApiDirectDebitProtocol: OBResourceProtocol {
     // TODO: remove version from OBExternalDirectDebitStatus1CodeType
-    associatedtype OBExternalDirectDebitStatus1CodeType: RawRepresentableWithStringRawValue
+    associatedtype OBExternalDirectDebitStatus1CodeType: RawRepresentable, Codable where OBExternalDirectDebitStatus1CodeType.RawValue == String
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     var directDebitStatusCode: OBExternalDirectDebitStatus1CodeType? {get}
     var previousPaymentAmount: OBActiveOrHistoricCurrencyAndAmountType? {get}
@@ -99,17 +104,17 @@ public protocol OBATApiDirectDebitProtocol: OBATApiResourceProtocol {
 
 // MARK:- Balance type protocols
 
-public protocol OBATApiReadBalanceDataProtocol: OBATApiReadResourceDataProtocol {
-    var balance: [OBATApiResourceType] { get }
+public protocol OBATApiReadBalanceDataProtocol: OBReadResourceDataProtocol {
+    var balance: [OBResource] { get }
 }
 extension OBATApiReadBalanceDataProtocol {
-    public var resource: [OBATApiResourceType]? { return balance }
+    public var resource: [OBResource]? { return balance }
 }
 
-public protocol OBATApiBalanceProtocol: OBATApiResourceProtocol {
-    associatedtype CreditDebitIndicatorType: RawRepresentableWithStringRawValue
+public protocol OBATApiBalanceProtocol: OBResourceProtocol {
+    associatedtype CreditDebitIndicatorType: RawRepresentable, Codable where CreditDebitIndicatorType.RawValue == String
     // TODO: remove version from...
-    associatedtype OBBalanceType1CodeType: RawRepresentableWithStringRawValue
+    associatedtype OBBalanceType1CodeType: RawRepresentable, Codable where OBBalanceType1CodeType.RawValue == String
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     var accountId: String {get}
     var creditDebitIndicator: CreditDebitIndicatorType {get}
@@ -121,14 +126,14 @@ public protocol OBATApiBalanceProtocol: OBATApiResourceProtocol {
 
 // MARK:- Standing order type protocols
 
-public protocol OBATApiReadStandingOrderDataProtocol: OBATApiReadResourceDataProtocol {
-    var standingOrder: [OBATApiResourceType]? { get }
+public protocol OBATApiReadStandingOrderDataProtocol: OBReadResourceDataProtocol {
+    var standingOrder: [OBResource]? { get }
 }
 extension OBATApiReadStandingOrderDataProtocol {
-    public var resource: [OBATApiResourceType]? { return standingOrder }
+    public var resource: [OBResource]? { return standingOrder }
 }
 
-public protocol OBATApiStandingOrderProtocol: OBATApiResourceProtocol {
+public protocol OBATApiStandingOrderProtocol: OBResourceProtocol {
     associatedtype OBActiveOrHistoricCurrencyAndAmountType0: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBActiveOrHistoricCurrencyAndAmountType1: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBActiveOrHistoricCurrencyAndAmountType2: OBActiveOrHistoricCurrencyAndAmountProtocol
@@ -154,16 +159,16 @@ public protocol OBCashAccountProtocol {
 
 // MARK:- Statement type protocols
 
-public protocol OBATApiReadStatementDataProtocol: OBATApiReadResourceDataProtocol {
-    var statement: [OBATApiResourceType]? { get }
+public protocol OBATApiReadStatementDataProtocol: OBReadResourceDataProtocol {
+    var statement: [OBResource]? { get }
 }
 extension OBATApiReadStatementDataProtocol {
-    public var resource: [OBATApiResourceType]? { return statement }
+    public var resource: [OBResource]? { return statement }
 }
 
-public protocol OBATApiStatementProtocol: OBATApiResourceProtocol {
+public protocol OBATApiStatementProtocol: OBResourceProtocol {
     // TODO: remove version from...
-    associatedtype OBExternalStatementType1CodeType: RawRepresentableWithStringRawValue
+    associatedtype OBExternalStatementType1CodeType: RawRepresentable, Codable where OBExternalStatementType1CodeType.RawValue == String
     associatedtype OBStatementDateTimeType: OBStatementDateTimeProtocol
     associatedtype OBStatementAmountType: OBStatementAmountProtocol
     var accountId: String { get }
@@ -179,16 +184,16 @@ public protocol OBATApiStatementProtocol: OBATApiResourceProtocol {
 
 // MARK:- Scheduled payment type protocols
 
-public protocol OBATApiReadScheduledPaymentDataProtocol: OBATApiReadResourceDataProtocol {
-    var scheduledPayment: [OBATApiResourceType]? { get }
+public protocol OBATApiReadScheduledPaymentDataProtocol: OBReadResourceDataProtocol {
+    var scheduledPayment: [OBResource]? { get }
 }
 extension OBATApiReadScheduledPaymentDataProtocol {
-    public var resource: [OBATApiResourceType]? { return scheduledPayment }
+    public var resource: [OBResource]? { return scheduledPayment }
 }
 
-public protocol OBATApiScheduledPaymentProtocol: OBATApiResourceProtocol {
+public protocol OBATApiScheduledPaymentProtocol: OBResourceProtocol {
     // TODO: remove version from...
-    associatedtype OBExternalScheduleType1CodeType: RawRepresentableWithStringRawValue
+    associatedtype OBExternalScheduleType1CodeType: RawRepresentable, Codable where OBExternalScheduleType1CodeType.RawValue == String
     associatedtype OBActiveOrHistoricCurrencyAndAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     var accountId: String { get }
     var scheduledPaymentId: String? { get }
@@ -201,16 +206,16 @@ public protocol OBATApiScheduledPaymentProtocol: OBATApiResourceProtocol {
 
 // MARK:- Product type protocols
 
-public protocol OBATApiReadProductDataProtocol: OBATApiReadResourceDataProtocol {
-    var product: [OBATApiResourceType]? { get }
+public protocol OBATApiReadProductDataProtocol: OBReadResourceDataProtocol {
+    var product: [OBResource]? { get }
 }
 extension OBATApiReadProductDataProtocol {
-    public var resource: [OBATApiResourceType]? { return product }
+    public var resource: [OBResource]? { return product }
 }
 
-public protocol OBATApiProductProtocol: OBATApiResourceProtocol {
+public protocol OBATApiProductProtocol: OBResourceProtocol {
     // TODO: remove version from...
-    associatedtype OBExternalProductType1CodeType: RawRepresentableWithStringRawValue
+    associatedtype OBExternalProductType1CodeType: RawRepresentable, Codable where OBExternalProductType1CodeType.RawValue == String
     var accountId: String { get }
     var productId: String? { get }
     var secondaryProductId: String? { get }
@@ -221,17 +226,17 @@ public protocol OBATApiProductProtocol: OBATApiResourceProtocol {
 
 // MARK:- Offer protocols
 
-public protocol OBATApiReadOfferDataProtocol: OBATApiReadResourceDataProtocol {
-    var offer: [OBATApiResourceType]? { get }
+public protocol OBATApiReadOfferDataProtocol: OBReadResourceDataProtocol {
+    var offer: [OBResource]? { get }
 }
 extension OBATApiReadOfferDataProtocol {
-    public var resource: [OBATApiResourceType]? { return offer }
+    public var resource: [OBResource]? { return offer }
 }
 
-public protocol OBATApiOfferProtocol: OBATApiResourceProtocol {
+public protocol OBATApiOfferProtocol: OBResourceProtocol {
     associatedtype OBOfferAmountType: OBActiveOrHistoricCurrencyAndAmountProtocol
     associatedtype OBOfferFeeType: OBActiveOrHistoricCurrencyAndAmountProtocol
-    associatedtype OBOfferType: RawRepresentableWithStringRawValue
+    associatedtype OBOfferType: RawRepresentable, Codable where OBOfferType.RawValue == String
     var accountId: String { get }
     var offerId: String? { get }
     var offerType: OBOfferType? { get }
@@ -250,14 +255,14 @@ public protocol OBATApiOfferProtocol: OBATApiResourceProtocol {
 
 // MARK:- Beneficiary protocols
 
-public protocol OBATApiReadBeneficiaryDataProtocol: OBATApiReadResourceDataProtocol {
-    var beneficiary: [OBATApiResourceType]? { get }
+public protocol OBATApiReadBeneficiaryDataProtocol: OBReadResourceDataProtocol {
+    var beneficiary: [OBResource]? { get }
 }
 extension OBATApiReadBeneficiaryDataProtocol {
-    public var resource: [OBATApiResourceType]? { return beneficiary }
+    public var resource: [OBResource]? { return beneficiary }
 }
 
-public protocol OBATApiBeneficiaryProtocol: OBATApiResourceProtocol {
+public protocol OBATApiBeneficiaryProtocol: OBResourceProtocol {
     var accountId: String? { get }
     var beneficiaryId: String? { get }
     var reference: String? { get }
@@ -265,18 +270,18 @@ public protocol OBATApiBeneficiaryProtocol: OBATApiResourceProtocol {
 
 // MARK:- Party protocols
 
-public protocol OBATApiReadPartyDataProtocol: OBATApiReadResourceDataProtocol {
-    var party: OBATApiResourceType? { get }
+public protocol OBATApiReadPartyDataProtocol: OBReadResourceDataProtocol {
+    var party: OBResource? { get }
 }
 extension OBATApiReadPartyDataProtocol {
-    public var resource: [OBATApiResourceType]? {
+    public var resource: [OBResource]? {
         return party == nil ? [] : [party!]
     }
 }
 
-public protocol OBATApiPartyProtocol: OBATApiResourceProtocol {
+public protocol OBATApiPartyProtocol: OBResourceProtocol {
     // TODO: remove version from...
-    associatedtype OBExternalPartyType1CodeType: RawRepresentableWithStringRawValue
+    associatedtype OBExternalPartyType1CodeType: RawRepresentable, Codable where OBExternalPartyType1CodeType.RawValue == String
     var partyId: String { get }
     var partyNumber: String? { get }
     var partyType: OBExternalPartyType1CodeType? { get }

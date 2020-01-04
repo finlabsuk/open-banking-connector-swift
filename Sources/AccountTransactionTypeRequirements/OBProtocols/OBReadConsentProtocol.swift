@@ -17,9 +17,9 @@ public protocol OBRiskApiProtocol: Codable {
     init()
 }
 
-public protocol OBReadConsentApiProtocol: AT_PI_CF_PostRequestApiProtocol where ResponseApi: OBReadConsentResponseApiProtocol {
+public protocol OBReadConsentProtocol: AT_PI_CF_PostRequestApiProtocol where ResponseApi: OBReadConsentResponseProtocol {
     
-    associatedtype OBReadConsentDataApi: OBReadConsentDataApiProtocol
+    associatedtype OBReadConsentDataApi: OBReadConsentDataProtocol
     var data: OBReadConsentDataApi { get set }
 
     associatedtype OBRiskApi: OBRiskApiProtocol
@@ -28,7 +28,7 @@ public protocol OBReadConsentApiProtocol: AT_PI_CF_PostRequestApiProtocol where 
     init(data: OBReadConsentDataApi, risk: OBRiskApi)
 }
 
-public protocol OBReadConsentDataApiProtocol: OBATApiResourceProtocol {
+public protocol OBReadConsentDataProtocol: OBResourceProtocol {
     associatedtype Permissions: RawRepresentable, Codable where Permissions.RawValue == String
     var permissions: [Permissions] { get set }
     var expirationDateTime: Date? { get set }
@@ -37,9 +37,9 @@ public protocol OBReadConsentDataApiProtocol: OBATApiResourceProtocol {
     init(permissions: [Permissions], expirationDateTime: Date?, transactionFromDateTime: Date?, transactionToDateTime: Date?)
 }
 
-public protocol OBReadConsentResponseApiProtocol: Codable {
+public protocol OBReadConsentResponseProtocol: Codable {
     
-    associatedtype OBReadConsentResponseDataApi: OBReadConsentResponseDataApiProtocol
+    associatedtype OBReadConsentResponseDataApi: OBReadConsentResponseDataProtocol
     var data: OBReadConsentResponseDataApi { get }
 
     associatedtype OBRiskApi: OBRiskApiProtocol
@@ -49,7 +49,7 @@ public protocol OBReadConsentResponseApiProtocol: Codable {
 
 }
 
-public protocol OBReadConsentResponseDataApiProtocol: OBATApiResourceProtocol {
+public protocol OBReadConsentResponseDataProtocol: OBResourceProtocol {
     associatedtype Status: RawRepresentable, Codable where Status.RawValue == String
     associatedtype Permissions: RawRepresentable, Codable where Permissions.RawValue == String
     var consentId: String { get }

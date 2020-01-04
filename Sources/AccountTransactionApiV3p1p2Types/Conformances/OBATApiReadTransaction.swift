@@ -19,16 +19,20 @@ public typealias OBTransactionBalanceAlias = OBTransactionCashBalance
 public typealias OBCreditDebitCode1Alias = OBCreditDebitCode1
 public typealias OBCreditDebitCode2Alias = OBCreditDebitCode2
 
-extension OBReadTransactionAlias: OBATApiReadTransactionProtocol {
-    public typealias OBATApiReadResourceDataType = OBReadDataTransaction5 }
-extension OBReadTransactionDataAlias: OBATApiReadTransactionDataProtocol {
-    public typealias OBATApiResourceType = OBTransaction5
+extension OBReadTransactionAlias: OBReadTransactionProtocol {
+    public typealias OBReadResourceData = OBReadDataTransaction5 }
+extension OBReadTransactionDataAlias: OBReadTransactionDataProtocol {
+    public typealias OBResource = OBTransaction5
 }
-extension OBCreditDebitCode1Alias: RawRepresentableWithStringRawValue {}
-extension OBCreditDebitCode2Alias: RawRepresentableWithStringRawValue {}
 extension OBTransactionBalanceAlias: OBTransactionCashBalanceProtocol {
     public var nestedAmount: String { return amount.amount }
+    public var creditDebitIndicatorEnum: OBCreditDebitCodeEnum? {
+        return OBCreditDebitCodeEnum(rawValue: creditDebitIndicator.rawValue)
+    }
 }
-extension OBTransactionAlias: OBATApiTransactionProtocol {
+extension OBTransactionAlias: OBTransactionProtocol {
     public var nestedAmount: String { return amount.amount }
+    public var creditDebitIndicatorEnum: OBCreditDebitCodeEnum? {
+        return OBCreditDebitCodeEnum(rawValue: creditDebitIndicator.rawValue)
+    }
 }

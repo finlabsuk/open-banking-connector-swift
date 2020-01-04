@@ -19,17 +19,21 @@ public typealias OBTransactionCDIndicatorAlias = OBTransaction3.CreditDebitIndic
 public typealias OBTransactionBalanceAlias = OBTransactionCashBalance
 public typealias OBTransactionBalanceCDIndicatorAlias = OBTransactionCashBalance.CreditDebitIndicator
 
-extension OBReadTransactionAlias: OBATApiReadTransactionProtocol {
-    public typealias OBATApiReadResourceDataType = OBReadTransaction3Data
+extension OBReadTransactionAlias: OBReadTransactionProtocol {
+    public typealias OBReadResourceData = OBReadTransaction3Data
 }
-extension OBReadTransactionDataAlias: OBATApiReadTransactionDataProtocol {
-    public typealias OBATApiResourceType = OBTransaction3
+extension OBReadTransactionDataAlias: OBReadTransactionDataProtocol {
+    public typealias OBResource = OBTransaction3
 }
-extension OBTransactionCDIndicatorAlias: RawRepresentableWithStringRawValue {}
-extension OBTransactionAlias: OBATApiTransactionProtocol {
+extension OBTransactionAlias: OBTransactionProtocol {
     public var nestedAmount: String { return amount.amount }
+    public var creditDebitIndicatorEnum: OBCreditDebitCodeEnum? {
+        return OBCreditDebitCodeEnum(rawValue: creditDebitIndicator.rawValue)
+    }
 }
-extension OBTransactionBalanceCDIndicatorAlias: RawRepresentableWithStringRawValue {}
 extension OBTransactionBalanceAlias: OBTransactionCashBalanceProtocol {
     public var nestedAmount: String { return amount.amount }
+    public var creditDebitIndicatorEnum: OBCreditDebitCodeEnum? {
+        return OBCreditDebitCodeEnum(rawValue: creditDebitIndicator.rawValue)
+    }
 }

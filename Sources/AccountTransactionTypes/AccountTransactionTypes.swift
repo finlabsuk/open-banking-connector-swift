@@ -45,11 +45,11 @@ public enum AccountTransactionResourceVariety: CaseIterable {
 public protocol AccountTransactionResourceProcesingBlock {
     associatedtype InputType
     associatedtype OutputType
-    static func executeInner<T1: OBATApiReadResourceProtocol, T2: OBATLocalResourceProtocol>(
+    static func executeInner<T1: OBReadResourceProtocol, T2: OBATLocalResourceProtocol>(
         type1: T1.Type,
         type2: T2.Type,
         input: InputType
-    ) throws -> OutputType where T2.OBATApiResourceType == T1.OBATApiReadResourceDataType.OBATApiResourceType
+    ) throws -> OutputType where T2.OBATApiResourceType == T1.OBReadResourceData.OBResource
 }
 
 extension AccountTransactionResourceProcesingBlock {
@@ -67,7 +67,7 @@ extension AccountTransactionResourceProcesingBlock {
             return try executeIntermediate(apiTypesType: OBATV3p1p2ReadResourceTypes.self, resourceType: resourceType, input: input)
         }
     }
-    static func executeIntermediate<T: OBATApiReadResourceTypesProtocol>(
+    static func executeIntermediate<T: OBReadResourceTypesProtocol>(
         apiTypesType: T.Type,
         resourceType: AccountTransactionResourceVariety,
         input: InputType
@@ -75,13 +75,13 @@ extension AccountTransactionResourceProcesingBlock {
         switch resourceType {
         case .transaction:
             return try Self.executeInner(
-                type1: T.OBATApiReadTransactionType.self,
+                type1: T.OBReadTransactionType.self,
                 type2: OBATLocalTransaction.self,
                 input: input
             )
         case .account:
             return try Self.executeInner(
-                type1: T.OBATApiReadAccountType.self,
+                type1: T.OBReadAccountType.self,
                 type2: OBATLocalAccount.self,
                 input: input
             )
@@ -133,7 +133,7 @@ extension AccountTransactionRequestOBObjectProcesingBlock {
         switch requestOBObjectVariety {
         case .accountAccessConsent:
             return try Self.executeInner(
-                type1: T.OBReadConsentApiType.self,
+                type1: T.OBReadConsentType.self,
                 type2: OBReadConsentLocal.self,
                 input: input
             )

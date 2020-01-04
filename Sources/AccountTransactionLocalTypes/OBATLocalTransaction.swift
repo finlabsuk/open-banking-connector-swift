@@ -14,7 +14,7 @@ import Foundation
 import AccountTransactionTypeRequirements
 import BaseServices
 
-public struct OBATLocalTransaction<OBATApiResourceType: OBATApiTransactionProtocol>: OBATLocalResourceProtocol {
+public struct OBATLocalTransaction<OBATApiResourceType: OBTransactionProtocol>: OBATLocalResourceProtocol {
     
     // ********************************************************************************
     // MARK: OBATLocalResourceProtocol Template Code

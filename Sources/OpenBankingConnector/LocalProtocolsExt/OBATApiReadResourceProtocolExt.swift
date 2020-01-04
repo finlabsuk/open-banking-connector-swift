@@ -17,7 +17,7 @@ import AccountTransactionTypeRequirements
 import AccountTransactionTypes
 import AccountTransactionLocalTypes
 
-extension OBATApiReadResourceProtocol {
+extension OBReadResourceProtocol {
     
     static func httpGet(
         obClient: OBClientProfile,

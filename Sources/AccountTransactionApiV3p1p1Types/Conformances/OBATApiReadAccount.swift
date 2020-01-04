@@ -16,10 +16,10 @@ public typealias OBApiReadAccountAlias = OBReadAccount3
 public typealias OBApiReadAccountDataAlias = OBReadAccount3Data
 public typealias OBApiAccountAlias = OBAccount3
 
-extension OBApiReadAccountAlias: OBATApiReadAccountProtocol {
-    public typealias OBATApiReadResourceDataType = OBApiReadAccountDataAlias
+extension OBApiReadAccountAlias: OBReadAccountProtocol {
+    public typealias OBReadResourceData = OBApiReadAccountDataAlias
 }
-extension OBApiReadAccountDataAlias: OBATApiReadAccountDataProtocol {
-    public typealias OBATApiResourceType = OBApiAccountAlias
+extension OBApiReadAccountDataAlias: OBReadAccountDataProtocol {
+    public typealias OBResource = OBApiAccountAlias
 }
-extension OBApiAccountAlias: OBATApiAccountProtocol { }
+extension OBApiAccountAlias: OBAccountProtocol { }

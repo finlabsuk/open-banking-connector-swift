@@ -14,7 +14,7 @@ import Foundation
 import BaseServices
 
 public protocol OBATLocalResourceProtocol: StoredItem {
-    associatedtype OBATApiResourceType: OBATApiResourceProtocol
+    associatedtype OBATApiResourceType: OBResourceProtocol
     init(
         softwareStatementProfileId: String,
         issuerURL: String,
