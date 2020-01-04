@@ -30,7 +30,7 @@ struct OpenIDConfiguration: Codable {
     let response_modes_supported: [String]?
     let token_endpoint: String
     let authorization_endpoint: String
-    var registration_endpoint: String
+    var registration_endpoint: String! // allows for missing value to be corrected via overrides
     
     static func httpGet(issuerURL: String, overrides: OpenIDConfigurationOverrides?) -> EventLoopFuture<OpenIDConfiguration> {
         let url = URL(string: issuerURL + "/.well-known/openid-configuration")!
@@ -48,6 +48,7 @@ struct OpenIDConfiguration: Codable {
                         OpenIDConfiguration.self,
                         from: data)
                     config.applyOverrides(overrides: overrides)
+                    try config.checkValidity()
                     return config
                 } else {
                     throw "Bad response..."
@@ -66,6 +67,14 @@ struct OpenIDConfiguration: Codable {
             }
         }
     }
+    
+    func checkValidity() throws {
+        
+        guard registration_endpoint != nil else {
+            throw "No registration endpoint provided by Open ID config or overrides"
+        }
+    }
+
     
 }
 

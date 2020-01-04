@@ -67,7 +67,7 @@ struct AccountTransactionConsent: ConsentProtocol {
     
     /// ID used to uniquely identify object (cannot be changed, create new object to change)
     /// - returns: A String object.
-    var id: String = UUID().uuidString
+    var id: String = UUID().uuidString.lowercased()
     
     // Association of data object with other data objects ("ownership")
     // Empty strings used for types where association doesn't make sense

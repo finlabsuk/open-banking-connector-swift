@@ -76,7 +76,7 @@ func endpointHandlerGetOBATResource(
                         regexMatch: [String],
                         responseCallback: (HTTPResponseStatus, Data) -> Void
                     )
-                    static func executeInner<T1, T2>(type1: T1.Type, type2: T2.Type, input: InputType) throws -> EventLoopFuture<Void> where T1 : OBATApiReadResourceProtocol, T2 : OBATLocalResourceProtocol, T2.OBATApiResourceType == T1.OBATApiReadResourceDataType.OBATApiResourceType {
+                    static func executeInner<T1, T2>(type1: T1.Type, type2: T2.Type, input: InputType) throws -> EventLoopFuture<Void> where T1 : OBReadResourceProtocol, T2 : OBATLocalResourceProtocol, T2.OBATApiResourceType == T1.OBReadResourceData.OBResource {
                         
                         // Get resource
                         return T1.httpGet(

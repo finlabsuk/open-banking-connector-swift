@@ -15,7 +15,7 @@ import BaseServices
 import AccountTransactionTypeRequirements
 
 public struct OBReadConsentLocal
-<OBReadConsentApi: OBReadConsentApiProtocol>: AccountTransactionRequestObjectLocalProtocol {
+<OBReadConsentApi: OBReadConsentProtocol>: AccountTransactionRequestObjectLocalProtocol {
     public typealias AccountTransactionRequestObjectApi = OBReadConsentApi
         
     public var data: OBReadConsentDataLocal
@@ -48,7 +48,7 @@ public struct OBReadConsentLocal
 }
 
 public struct OBReadConsentDataLocal
-<OBReadConsentDataApi: OBReadConsentDataApiProtocol>: Codable {
+<OBReadConsentDataApi: OBReadConsentDataProtocol>: Codable {
 
     public enum Permissions: String, Codable {
         case readAccountsBasic = "ReadAccountsBasic"

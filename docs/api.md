@@ -40,6 +40,15 @@ For each endpoint described below, the Local Types are listed and relevant code 
 
 ### AISP Functional Endpoints
 
+For AISP, the functional endpoints listed in this section are supported. They are based on the UK Open Banking Read/Write API specs.
+
+
+| Purpose     | Endpoint | Request Body | Response Body
+| - | - | - | - |
+| Get  Accounts | GET	/accounts |	 |  |
+| Get Transactions |	GET	/transactions	|	| |	 |  |
+
+
 ### PISP Functional Endpoints
 
 For PISP, the functional endpoints listed in this section are supported. They are based on the UK Open Banking Read/Write API specs.

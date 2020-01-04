@@ -146,33 +146,48 @@ struct OBClientRegistrationClaims: Claims, Equatable {
         )
             
             // Post claims
-            .flatMap({ obClientRegistrationJws -> EventLoopFuture<HTTPClient.Response> in
+            .flatMap({ obClientRegistrationJws -> EventLoopFuture<OBClientRegistrationResponse> in
+                let url = URL(string: openIDConfiguration.registration_endpoint)!
                 var request = hcm.postRequestRegistration(
-                    url: URL(string: openIDConfiguration.registration_endpoint)!
+                    url: url
                 )
                 request.body = .string(obClientRegistrationJws)
-                return hcm.executeMTLS(request: request, httpClientMTLSConfiguration: httpClientMTLSConfiguration)
-            })
-            
-            // Decode response
-            .flatMapThrowing({ response -> OBClientRegistrationResponse in
-                if response.status == .created,
-                    var body = response.body {
-                    let data = body.readData(length: body.readableBytes)!
-                    var responseObject = try hcm.jsonDecoderDateFormatSecondsSince1970.decode(
-                        OBClientRegistrationResponse.self,
-                        from: data)
-                    responseObject.applyOverrides(overrides: obClientRegistrationResponseOverrides)
-                    print(response.status.code)
-                    print(responseObject)
-                    return responseObject
-                } else {
-                    if var bodyTmp = response.body,
-                        let bodyString = bodyTmp.readString(length: bodyTmp.readableBytes) {
-                        print(bodyString)
+                return hcm.executeMTLS(
+                    request: request,
+                    httpClientMTLSConfiguration: httpClientMTLSConfiguration
+                )
+                
+                // Decode response
+                .flatMapThrowing({ response -> OBClientRegistrationResponse in
+                    if response.status == .created,
+                        var body = response.body {
+                        let data = body.readData(length: body.readableBytes)!
+                        var responseObject = try hcm.jsonDecoderDateFormatSecondsSince1970.decode(
+                            OBClientRegistrationResponse.self,
+                            from: data)
+                        responseObject.applyOverrides(overrides: obClientRegistrationResponseOverrides)
+                        print(response.status.code)
+                        print(responseObject)
+                        return responseObject
+                    } else {
+                        let bodyString: String
+                        if var bodyTmp = response.body,
+                            let bodyTmp2 = bodyTmp.readString(length: bodyTmp.readableBytes) {
+                            bodyString = bodyTmp2
+                        } else {
+                            bodyString = "<No body string received>"
+                        }
+                        let errorString =
+                        """
+                        POST \(url) \(response.status.code)
+                        \(bodyString)
+                        OBC Error: Bad response status code received
+                        """
+                        print(errorString)
+                        throw errorString
                     }
-                    throw "Bad response..."
-                }
+                })
+                
             })
             
             // Check response and create OBClientProfile
@@ -237,10 +252,6 @@ struct OBClientRegistrationClaims: Claims, Equatable {
                 )
             })
             
-            .flatMapError({error in
-                print(error)
-                fatalError()
-            })
     }
     
     
@@ -263,7 +274,7 @@ extension OBClientRegistrationClaims {
                 date: Date(timeIntervalSinceNow: 3600)
             ),
             jti: StringExcludedFromEquatable(
-                string: UUID().uuidString
+                string: UUID().uuidString.lowercased()
             ),
             client_id: nil,
             redirect_uris: softwareStatementProfile.softwareStatementPayload.software_redirect_uris,

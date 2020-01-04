@@ -12,16 +12,16 @@
 
 import Foundation
 
-public protocol OBATApiReadAccountProtocol: OBATApiReadResourceProtocol where OBATApiReadResourceDataType: OBATApiReadAccountDataProtocol { }
+public protocol OBReadAccountProtocol: OBReadResourceProtocol where OBReadResourceData: OBReadAccountDataProtocol { }
 
-public protocol OBATApiReadAccountDataProtocol: OBATApiReadResourceDataProtocol where OBATApiResourceType: OBATApiAccountProtocol {
-    var account: [OBATApiResourceType]? { get }
+public protocol OBReadAccountDataProtocol: OBReadResourceDataProtocol where OBResource: OBAccountProtocol {
+    var account: [OBResource]? { get }
 }
-extension OBATApiReadAccountDataProtocol {
-    public var resource: [OBATApiResourceType]? { return account }
+extension OBReadAccountDataProtocol {
+    public var resource: [OBResource]? { return account }
 }
 
-public protocol OBATApiAccountProtocol: OBATApiResourceProtocol {
+public protocol OBAccountProtocol: OBResourceProtocol {
     var nickname: String? {get}
     var accountId: String {get}
     var currency: String {get}

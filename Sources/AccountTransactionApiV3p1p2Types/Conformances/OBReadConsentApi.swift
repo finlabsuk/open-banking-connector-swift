@@ -14,22 +14,22 @@ import AccountTransactionTypeRequirements
 import BaseServices
 
 public typealias OBReadConsentApi = OBReadConsent1
-extension OBReadConsentApi: OBReadConsentApiProtocol {
+extension OBReadConsentApi: OBReadConsentProtocol {
     public typealias ResponseApi = OBReadConsentResponseApi
 }
 extension OBReadConsentResponse1: tmp2 { }
 extension OBReadConsentResponse1Data: tmp1 { }
 
 public typealias OBReadConsentDataApi = OBReadConsent1Data
-extension OBReadConsentDataApi: OBReadConsentDataApiProtocol { }
+extension OBReadConsentDataApi: OBReadConsentDataProtocol { }
 
 public typealias OBRiskApi = OBRisk2
 extension OBRiskApi: OBRiskApiProtocol { }
 
 public typealias OBReadConsentResponseApi = OBReadConsentResponse1
-extension OBReadConsentResponseApi: OBReadConsentResponseApiProtocol {
+extension OBReadConsentResponseApi: OBReadConsentResponseProtocol {
     public var riskOptional: OBRiskApi? { return risk}
 }
 
 public typealias OBReadConsentResponseDataApi = OBReadConsentResponse1Data
-extension OBReadConsentResponseDataApi: OBReadConsentResponseDataApiProtocol { }
+extension OBReadConsentResponseDataApi: OBReadConsentResponseDataProtocol { }

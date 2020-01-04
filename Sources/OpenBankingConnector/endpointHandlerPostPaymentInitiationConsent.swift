@@ -114,12 +114,13 @@ func endpointHandlerPostPaymentInitiationConsent(
                                 let jwsSignature = "\(jwsComponents[0])..\(jwsComponents[2])"
                                 let url = URL(string: input.obClientProfile.paymentInitiationAPISettings.obBaseURL + input.regexMatch[0])!
                                 let requestObjectApiData = try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(requestObjectApi)
+                                //print(String(decoding: requestObjectApiData, as: UTF8.self))
                                 return hcm.httpPost(
                                     url: url,
                                     headers: [
                                         "x-fapi-financial-id": input.obClientProfile.xFapiFinancialId,
                                         "Authorization": "Bearer " + input.obTokenEndpointResponse.access_token,
-                                        "x-idempotency-key": UUID().uuidString,
+                                        "x-idempotency-key": UUID().uuidString.lowercased(),
                                         "x-jws-signature": jwsSignature,
                                     ],
                                     body: requestObjectApiData,

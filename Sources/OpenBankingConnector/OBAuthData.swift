@@ -16,11 +16,4 @@ struct OBAuthData {
     let id_token: String
     let state: String
 
-    init(input: String) {
-        let componentDict = tmpDecode(input: input)
-        self.code = componentDict["code"]!
-        self.id_token = componentDict["id_token"]!
-        self.state = componentDict["state"]!
-    }
-    
 }

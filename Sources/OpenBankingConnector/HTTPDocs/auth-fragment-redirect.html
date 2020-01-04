@@ -56,6 +56,7 @@
     </a>
     <h1>Operation Complete</h1>
     <h4>Tool or app using Open Banking Connector should close this window automatically</h4>
+    <h4 id='authCode'>Auth code: empty</h4>
   </div>
   <script>
     (async () => {
@@ -64,6 +65,8 @@
       if (fragmentParams) {
         console.log('Fragment supplied.')
         const params = new URLSearchParams(fragmentParams);
+        const code = params.get('code');
+        document.getElementById("authCode").innerHTML = `Auth code: ${code}`;
         params.append('relayedFromFragment', 'true');
         const newURL = 'fragment-redirect-delegate'; // relative to current URL
         const response = await fetch(newURL, {

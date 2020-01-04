@@ -54,7 +54,7 @@ public struct HeaderOB: HeaderProtocol {
         self.obTan = obTan
     }
     
-    func encode() throws -> String {
+    public func encode() throws -> String {
         let data = try hcm.jsonEncoderDateFormatSecondsSince1970.encode(self)
         return JWTEncoder.base64urlEncodedString(data: data)
     }

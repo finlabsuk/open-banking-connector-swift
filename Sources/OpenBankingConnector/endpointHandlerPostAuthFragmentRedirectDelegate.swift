@@ -38,7 +38,18 @@ func endpointHandlerPostAuthFragmentRedirectDelegate(
             if data.isEmpty {
                 throw("No body data received in request")
             }
-            authData = OBAuthData(input: String(decoding: data, as: UTF8.self))
+            let receivedString = String(decoding: data, as: UTF8.self)
+            let componentDict = tmpDecode(input: receivedString)
+            if
+                let code = componentDict["code"],
+                let id_token = componentDict["id_token"],
+                let state = componentDict["state"]
+            {
+                authData = OBAuthData(code: code, id_token: id_token, state: state)
+            } else {
+                let error = componentDict["error"]
+                throw "Auth attempt produced error: \(error ?? "None provided")"
+            }
         } catch {
             print("\(error)")
             let errorBody = ErrorPublic(error: "\(error)")

@@ -66,8 +66,8 @@ struct OBRequestObjectClaims: Claims {
     let max_age: Int
     let claims: OBRequestObjectClaimsInnerClaims
     
-    let nonce = UUID().uuidString // TODO: change
-    let state = UUID().uuidString // TODO: change
+    let nonce = UUID().uuidString.lowercased()
+    let state = UUID().uuidString.lowercased()
     
 //    func encode() throws -> String {
 //        var data = try hcm.jsonEncoderDateFormatSecondsSince1970.encode(self)
@@ -92,7 +92,7 @@ extension OBClientProfile {
             iss: self.registrationData.client_id,
             aud: self.issuerURL,
             jti: StringExcludedFromEquatable(
-                string: UUID().uuidString
+                string: UUID().uuidString.lowercased()
             ),
             response_type: "code id_token",
             client_id: self.registrationData.client_id,

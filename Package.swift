@@ -16,17 +16,17 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.9.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.12.0"),
         //.package(path: "../swift-nio"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.1"),
         //.package(url: "https://github.com/IBM-Swift/Swift-JWT.git", from: "3.5.0"),
         //.package(path: "../Swift-JWT"),
         // Temporarily use forked version of Swift-JWT whilst sorting out https://github.com/IBM-Swift/Swift-JWT/issues/80
         .package(url: "https://github.com/markfinlabs/Swift-JWT.git", .branch("header-flexibility")),
-        .package(url: "https://github.com/vapor/sqlite-kit.git", from: "4.0.0-alpha.1.1"),
+        .package(url: "https://github.com/vapor/sqlite-kit.git", from: "4.0.0-beta.3"),
         //.package(path: "../sqlite-kit"),
-        .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-alpha.1.3"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.1.0")
+        .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0-beta.3"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.2.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

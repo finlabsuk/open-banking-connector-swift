@@ -14,7 +14,7 @@ import Foundation
 import AccountTransactionTypeRequirements
 import BaseServices
 
-public struct OBATLocalAccount<OBATApiResourceType: OBATApiAccountProtocol>: OBATLocalResourceProtocol {
+public struct OBATLocalAccount<OBATApiResourceType: OBAccountProtocol>: OBATLocalResourceProtocol {
     
     // ********************************************************************************
     // MARK: OBATLocalResourceProtocol Template Code
@@ -36,7 +36,7 @@ public struct OBATLocalAccount<OBATApiResourceType: OBATApiAccountProtocol>: OBA
     
     /// ID used to uniquely identify object (cannot be changed, create new object to change)
     /// - returns: A String object.
-    public let id: String = UUID().uuidString
+    public let id: String = UUID().uuidString.lowercased()
     
     // Association of data object with other data objects ("ownership")
     // Empty strings used for types where association doesn't make sense

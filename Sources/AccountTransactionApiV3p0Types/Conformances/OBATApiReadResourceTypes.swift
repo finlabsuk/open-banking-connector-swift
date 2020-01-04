@@ -12,12 +12,12 @@
 
 import AccountTransactionTypeRequirements
 
-public class OBATV3p0ReadResourceTypes: OBATApiReadResourceTypesProtocol {
-    public typealias OBATApiReadTransactionType = OBReadTransactionAlias
-    public typealias OBATApiReadAccountType = OBApiReadAccountAlias
+public class OBATV3p0ReadResourceTypes: OBReadResourceTypesProtocol {
+    public typealias OBReadTransactionType = OBReadTransactionAlias
+    public typealias OBReadAccountType = OBApiReadAccountAlias
 }
 
 public class AccountTransactionRequestOBObjectApiV3p0Types: AccountTransactionRequestObjectApiTypesProtocol {
-    public typealias OBReadConsentApiType = OBReadConsentApi
+    public typealias OBReadConsentType = OBReadConsentApi
     
 }
