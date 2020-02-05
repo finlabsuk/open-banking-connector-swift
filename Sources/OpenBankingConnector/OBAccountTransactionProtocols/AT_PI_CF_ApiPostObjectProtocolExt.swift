@@ -28,13 +28,15 @@ extension AT_PI_CF_PostRequestApiProtocol {
         return eventLoop.makeSucceededFuture(())
             
             .flatMap({
-                hcm.httpPost(
+                let bodyData = try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(self)
+                //print(String(decoding: bodyData, as: UTF8.self))
+                return hcm.httpPost(
                     url: url,
                     headers: [
                         "x-fapi-financial-id": obClient.xFapiFinancialId,
                         "Authorization": authHeader
                     ],
-                    body: try! hcm.jsonEncoderDateFormatISO8601WithMilliSeconds.encode(self),
+                    body: bodyData,
                     httpClientMTLSConfiguration: obClient.httpClientMTLSConfiguration
                 )
             })

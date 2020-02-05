@@ -178,6 +178,8 @@ final class HTTPClientManager {
     let jsonEncoderDateFormatISO8601WithMilliSeconds: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatISO8601WithMilliSeconds: JSONDecoder = JSONDecoder()
     
+    let jsonDecoderDateFormatISO8601WithMilliSecondsOrSeconds: JSONDecoder = JSONDecoder()
+
     let jsonEncoderDateFormatSecondsSince1970: JSONEncoder = JSONEncoder()
     let jsonDecoderDateFormatSecondsSince1970: JSONDecoder = JSONDecoder()
 
@@ -193,18 +195,31 @@ final class HTTPClientManager {
         jsonDecoderDateFormatISO8601WithSeconds.dateDecodingStrategy = .iso8601
         
         let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        dateFormatter.formatOptions = [.withInternetDateTime]
+        let dateFormatterWithFractionalSeconds = ISO8601DateFormatter()
+        dateFormatterWithFractionalSeconds.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         jsonEncoderDateFormatISO8601WithMilliSeconds.dateEncodingStrategy = .custom({ (date, encoder) in
             var container = encoder.singleValueContainer()
-            try container.encode(dateFormatter.string(from: date))
+            try container.encode(dateFormatterWithFractionalSeconds.string(from: date))
         })
         jsonDecoderDateFormatISO8601WithMilliSeconds.dateDecodingStrategy = .custom({decoder in
             let value = try decoder.singleValueContainer()
             let stringValue = try value.decode(String.self)
-            guard let date = dateFormatter.date(from: stringValue) else {
+            guard let date = dateFormatterWithFractionalSeconds.date(from: stringValue) else {
                 throw "Can't convert from String to Date"
             }
             return date
+        })        
+        jsonDecoderDateFormatISO8601WithMilliSecondsOrSeconds.dateDecodingStrategy = .custom({decoder in
+            let value = try decoder.singleValueContainer()
+            let stringValue = try value.decode(String.self)
+            if let date = dateFormatterWithFractionalSeconds.date(from: stringValue) {
+                return date
+            } else if let date = dateFormatter.date(from: stringValue) {
+                return date
+            } else {
+                throw "Can't convert from String to Date"
+            }
         })
         
         jsonEncoderDateFormatSecondsSince1970.dateEncodingStrategy = .custom({ (date, encoder) in
@@ -314,15 +329,7 @@ final class HTTPClientManager {
                     // Decode response
                     let data = body.readData(length: body.readableBytes)!
                     print(String(decoding: data, as: UTF8.self))
-                    let responseObject: ResponseType
-                    if
-                        let responseObjectTmp = try? hcm.jsonDecoderDateFormatISO8601WithMilliSeconds.decode(ResponseType.self, from: data)
-                    {
-                        responseObject = responseObjectTmp
-                    } else {
-                        let responseObjectTmp = try hcm.jsonDecoderDateFormatISO8601WithSeconds.decode(ResponseType.self, from: data)
-                        responseObject = responseObjectTmp
-                    }
+                    let responseObject: ResponseType = try hcm.jsonDecoderDateFormatISO8601WithMilliSecondsOrSeconds.decode(ResponseType.self, from: data)
                     return responseObject
                     
                 } else {
